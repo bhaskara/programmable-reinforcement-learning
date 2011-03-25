@@ -1,0 +1,1 @@
+find `lispdirs` -regex ".*\.lisp"

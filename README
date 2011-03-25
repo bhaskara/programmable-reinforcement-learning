@@ -1,0 +1,5 @@
+This repository includes the ALisp and Concurrent ALisp languages, extensions of standard Lisp that allow the specification of "partial programs" that can be used as prior knowledge for learning algorithms. The project aims to facilitate reproducible research and, to this end, provides:
+
+    * Efficient implementations of several existing algorithms for flat and hierarchical reinforcement learning.
+    * Reference versions of the ALisp and Concurrent ALisp languages.
+    * An object-oriented framework that makes it very easy to develop and experiment with new learning algorithms. 

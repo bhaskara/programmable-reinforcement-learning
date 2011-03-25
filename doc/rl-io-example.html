@@ -1,0 +1,297 @@
+<html><head><title>Example of rl:io-interface</title></head>
+<body>
+<code>
+</code><pre>CL-USER(21): (setf q-learning-q-hist (rl-user:get-q-hist q-learner))
+[Omitted printed reps of q-functions]
+CL-USER(22): (rl-user:io-interface e (aref q-learning-q-hist 1) (aref q-learning-q-hist 5) (aref q-learning-q-hist 90))
+
+Environment reset to 
+XXXXX
+X XtX
+X   X
+XXXXX
+Source : (1 0)  Dest : (0 2)  Fuel : 1
+
+At state 
+XXXXX
+X XtX
+X   X
+XXXXX
+Source : (1 0)  Dest : (0 2)  Fuel : 1.
+Set of available choices is (N E S W D P F)
+--------------------------------------------------
+Advisor 0: 
+Q-values #((N . UNKNOWN) (E . UNKNOWN) (S . UNKNOWN) (W . UNKNOWN)
+           (D . UNKNOWN) (P . UNKNOWN) (F . UNKNOWN))
+Unable to determine best choice.
+--------------------------------------------------
+Advisor 1: 
+Q-values #((N . -0.159) (E . -0.155) (S . -0.034) (W . -0.126)
+           (D . -0.029) (P . -0.036) (F . -0.025))
+Recommended choice is F
+--------------------------------------------------
+Advisor 2: 
+Q-values #((N . -0.934) (E . -0.934) (S . -0.325) (W . -0.933)
+           (D . -0.434) (P . -0.435) (F . -0.434))
+Recommended choice is S
+--------------------------------------------------
+Please enter choice, or nil to terminate. S
+Episode 0 Step 0.  Did S, received -0.1, and now in state 
+XXXXX
+X X X
+X  tX
+XXXXX
+Source : (1 0)  Dest : (0 2)  Fuel : 1
+
+At state 
+XXXXX
+X X X
+X  tX
+XXXXX
+Source : (1 0)  Dest : (0 2)  Fuel : 1.
+Set of available choices is (N E S W D P F)
+--------------------------------------------------
+Advisor 0: 
+Q-values #((N . UNKNOWN) (E . -0.006) (S . UNKNOWN) (W . -0.001)
+           (D . -0.003) (P . UNKNOWN) (F . -0.001))
+Recommended choice is W
+--------------------------------------------------
+Advisor 1: 
+Q-values #((N . -0.033) (E . -0.126) (S . -0.15) (W . -0.023)
+           (D . -0.032) (P . -0.024) (F . -0.022))
+Recommended choice is F
+--------------------------------------------------
+Advisor 2: 
+Q-values #((N . -0.432) (E . -0.815) (S . -0.819) (W . -0.174)
+           (D . -0.32) (P . -0.324) (F . -0.315))
+Recommended choice is W
+--------------------------------------------------
+Please enter choice, or nil to terminate. W
+Episode 0 Step 1.  Did W, received -0.1, and now in state 
+XXXXX
+X X X
+X t X
+XXXXX
+Source : (1 0)  Dest : (0 2)  Fuel : 1
+
+At state 
+XXXXX
+X X X
+X t X
+XXXXX
+Source : (1 0)  Dest : (0 2)  Fuel : 1.
+Set of available choices is (N E S W D P F)
+--------------------------------------------------
+Advisor 0: 
+Q-values #((N . -0.018) (E . -0.001) (S . UNKNOWN) (W . -0.003)
+           (D . -0.001) (P . UNKNOWN) (F . -0.001))
+Recommended choice is E
+--------------------------------------------------
+Advisor 1: 
+Q-values #((N . -0.149) (E . -0.019) (S . -0.131) (W . -0.027)
+           (D . -0.024) (P . -0.017) (F . -0.029))
+Recommended choice is P
+--------------------------------------------------
+Advisor 2: 
+Q-values #((N . -0.68) (E . -0.318) (S . -0.681) (W . -0.001)
+           (D . -0.194) (P . -0.18) (F . -0.193))
+Recommended choice is W
+--------------------------------------------------
+Please enter choice, or nil to terminate. W
+Episode 0 Step 2.  Did W, received -0.1, and now in state 
+XXXXX
+X X X
+Xt  X
+XXXXX
+Source : (1 0)  Dest : (0 2)  Fuel : 1
+
+At state 
+XXXXX
+X X X
+Xt  X
+XXXXX
+Source : (1 0)  Dest : (0 2)  Fuel : 1.
+Set of available choices is (N E S W D P F)
+--------------------------------------------------
+Advisor 0: 
+Q-values #((N . -0.003) (E . -0.002) (S . -0.012) (W . -0.006)
+           (D . -0.005) (P . -0.004) (F . -0.003))
+Recommended choice is E
+--------------------------------------------------
+Advisor 1: 
+Q-values #((N . -0.025) (E . -0.018) (S . -0.14) (W . -0.091)
+           (D . -0.021) (P . -0.026) (F . -0.027))
+Recommended choice is E
+--------------------------------------------------
+Advisor 2: 
+Q-values #((N . -0.193) (E . -0.198) (S . -0.515) (W . -0.517)
+           (D . -0.031) (P . 0.23) (F . -0.047))
+Recommended choice is P
+--------------------------------------------------
+Please enter choice, or nil to terminate. P
+Episode 0 Step 3.  Did P, received -0.1, and now in state 
+XXXXX
+X X X
+XT  X
+XXXXX
+Source : (1 0)  Dest : (0 2)  Fuel : 1
+
+At state 
+XXXXX
+X X X
+XT  X
+XXXXX
+Source : (1 0)  Dest : (0 2)  Fuel : 1.
+Set of available choices is (N E S W D P F)
+--------------------------------------------------
+Advisor 0: 
+Q-values #((N . -0.016) (E . -0.022) (S . -0.14) (W . -0.08)
+           (D . -0.018) (P . -0.014) (F . -0.014))
+Recommended choice is P
+--------------------------------------------------
+Advisor 1: 
+Q-values #((N . -0.075) (E . -0.082) (S . -0.409) (W . -0.39)
+           (D . -0.083) (P . -0.081) (F . -0.085))
+Recommended choice is N
+--------------------------------------------------
+Advisor 2: 
+Q-values #((N . 0.227) (E . 0.497) (S . -0.135) (W . -0.129)
+           (D . 0.369) (P . 0.364) (F . 0.365))
+Recommended choice is E
+--------------------------------------------------
+Please enter choice, or nil to terminate. E
+Episode 0 Step 4.  Did E, received -0.1, and now in state 
+XXXXX
+X X X
+X T X
+XXXXX
+Source : (1 0)  Dest : (0 2)  Fuel : 1
+
+At state 
+XXXXX
+X X X
+X T X
+XXXXX
+Source : (1 0)  Dest : (0 2)  Fuel : 1.
+Set of available choices is (N E S W D P F)
+--------------------------------------------------
+Advisor 0: 
+Q-values #((N . -0.155) (E . -0.019) (S . -0.11) (W . -0.019)
+           (D . -0.024) (P . -0.024) (F . -0.019))
+Recommended choice is E
+--------------------------------------------------
+Advisor 1: 
+Q-values #((N . -0.342) (E . -0.051) (S . -0.325) (W . -0.075)
+           (D . -0.062) (P . -0.068) (F . -0.065))
+Recommended choice is E
+--------------------------------------------------
+Advisor 2: 
+Q-values #((N . -0.014) (E . 0.622) (S . -0.013) (W . 0.356)
+           (D . 0.489) (P . 0.484) (F . 0.488))
+Recommended choice is E
+--------------------------------------------------
+Please enter choice, or nil to terminate. E
+Episode 0 Step 5.  Did E, received -0.1, and now in state 
+XXXXX
+X X X
+X  TX
+XXXXX
+Source : (1 0)  Dest : (0 2)  Fuel : 1
+
+At state 
+XXXXX
+X X X
+X  TX
+XXXXX
+Source : (1 0)  Dest : (0 2)  Fuel : 1.
+Set of available choices is (N E S W D P F)
+--------------------------------------------------
+Advisor 0: 
+Q-values #((N . -0.009) (E . -0.1) (S . -0.063) (W . -0.017)
+           (D . -0.012) (P . -0.014) (F . -0.012))
+Recommended choice is N
+--------------------------------------------------
+Advisor 1: 
+Q-values #((N . -0.001) (E . -0.221) (S . -0.184) (W . -0.046)
+           (D . -0.042) (P . -0.041) (F . -0.038))
+Recommended choice is N
+--------------------------------------------------
+Advisor 2: 
+Q-values #((N . 0.746) (E . 0.101) (S . 0.096) (W . 0.461) (D . 0.599)
+           (P . 0.597) (F . 0.604))
+Recommended choice is N
+--------------------------------------------------
+Please enter choice, or nil to terminate. N
+Episode 0 Step 6.  Did N, received -0.1, and now in state 
+XXXXX
+X XTX
+X   X
+XXXXX
+Source : (1 0)  Dest : (0 2)  Fuel : 1
+
+At state 
+XXXXX
+X XTX
+X   X
+XXXXX
+Source : (1 0)  Dest : (0 2)  Fuel : 1.
+Set of available choices is (N E S W D P F)
+--------------------------------------------------
+Advisor 0: 
+Q-values #((N . -0.034) (E . -0.056) (S . -0.007) (W . -0.029)
+           (D . 0.027) (P . -0.008) (F . -0.007))
+Recommended choice is D
+--------------------------------------------------
+Advisor 1: 
+Q-values #((N . -0.166) (E . -0.127) (S . -0.027) (W . -0.131)
+           (D . 0.164) (P . -0.003) (F . -0.003))
+Recommended choice is D
+--------------------------------------------------
+Advisor 2: 
+Q-values #((N . 0.194) (E . 0.191) (S . 0.509) (W . 0.191) (D . 0.873)
+           (P . 0.677) (F . 0.683))
+Recommended choice is D
+--------------------------------------------------
+Please enter choice, or nil to terminate. D
+Episode 0 Step 7.  Did D, received 0.9, and now in state 
+XXXXX
+X XtX
+X   X
+XXXXX
+Source : (1 0)  Dest : (0 2)  Fuel : 1
+Episode complete.
+
+Environment reset to 
+XXXXX
+X XtX
+X   X
+XXXXX
+Source : (1 0)  Dest : (0 2)  Fuel : 1
+
+At state 
+XXXXX
+X XtX
+X   X
+XXXXX
+Source : (1 0)  Dest : (0 2)  Fuel : 1.
+Set of available choices is (N E S W D P F)
+--------------------------------------------------
+Advisor 0: 
+Q-values #((N . UNKNOWN) (E . UNKNOWN) (S . UNKNOWN) (W . UNKNOWN)
+           (D . UNKNOWN) (P . UNKNOWN) (F . UNKNOWN))
+Unable to determine best choice.
+--------------------------------------------------
+Advisor 1: 
+Q-values #((N . -0.159) (E . -0.155) (S . -0.034) (W . -0.126)
+           (D . -0.029) (P . -0.036) (F . -0.025))
+Recommended choice is F
+--------------------------------------------------
+Advisor 2: 
+Q-values #((N . -0.934) (E . -0.934) (S . -0.325) (W . -0.933)
+           (D . -0.434) (P . -0.435) (F . -0.434))
+Recommended choice is S
+--------------------------------------------------
+Please enter choice, or nil to terminate. nil
+CL-USER(23):  </pre>
+
+</body></html>

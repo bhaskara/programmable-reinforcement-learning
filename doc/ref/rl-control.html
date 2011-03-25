@@ -1,0 +1,79 @@
+<html>
+<body>
+<title>
+Specification of main loop for flat reinforcement learning algorithms
+</title>
+</body>
+
+<h1>Main loop for flat reinforcement learning</h1>
+
+This document describes what happens during the main loop for flat reinforcement learning.  This is useful when designing new kinds of observers, learning algorithms, and policy types.  The outline is:
+<nl>
+<li>Specification of the inputs that can be used to parametrize the main loop's behaviour.
+<li>Description of the exported functions (learn, evaluate, and io-interface) that call this main loop.
+<li>Description of the state that is maintained during the loop.
+<li>Description of the kinds of messages that can be sent to observers.
+<li>Step-by-step description of what happens during the loop.
+</nl>
+
+<h3>Inputs</h3>
+
+The main loop takes the following inputs:
+<ul>
+<li>An environment <code>ENVIRONMENT</code>, of type <code>&lt;env&gt;</code>.
+<li>A designator <code>OBSERVERS</code> for a list of <i>observers</i>, each of type <code>&lt;rl-observer&gt;</code>.
+<li>A policy <code>POLICY</code>, of type <code>&lt;policy&gt;</code>.
+<li><code>MAX-NUM-STEPS</code>, which is either a fixnum or nil.
+<li><code>MAX-NUM-EPISODES</code>, which is either a fixnum or nil.
+</ul>
+
+<h3>Exported functions that use the main loop</h3>
+
+The following functions are available when using the <code>rl-user</code> package, as ways of accessing the main loop.
+
+<ul>
+<li><code>learn ENVIRONMENT POLICY OBSERVERS MAX-NUM-STEPS &key (HIST-LENGTH nil) (STEP-PRINT-INC 100) (EP-PRINT-INC 10)</code>.  The main loop is called with the given environment, policy, and value of <code>MAX-NUM-STEPS</code>.  <code>MAX-NUM-EPISODES</code> is set to nil.  The observer list consists of <code>OBSERVERS</code> together with a <i>progress-printer</i> that sends confirmation to standard output at regular intervals according to <code>STEP-PRINT-INC</code> and <code>EP-PRINT-INC</code>.  All observers that are also of type <code>&lt;learning-algorithm&gt;</code> are set to collect history at regular intervals such that the total history length will be <code>HIST-LENGTH</code>.
+<li><code>on-policy-learning ENVIRONMENT ALG &rest ARGS</code>. <code>ALG</code> is an object which is of type <code>&lt;learning-algorithm&gt;</code> and is also of type <code>&lt;policy&gt;</code>.  Calls <code>learn</code> with <code>POLICY</code> and <code>OBSERVERS</code> equalling <code>ALG</code>, and with the remaining arguments filled in using <code>ARGS</code>.
+<li><code>evaluate ENVIRONMENT POLICIES &key (NUM-TRIALS 1) (NUM-STEPS nil) (STEP-PRINT-INC 100) (ENV-DISPLAY-STREAM nil) (PAUSE-AFTER-ACTIONS nil)</code>.  <code>POLICIES</code> is either a policy or a sequence of policies.  For each policy, average the results of doing the following <code>NUM-TRIALS</code> times: call the main loop with the given environment and policy and value of <code>MAX-NUM-STEPS</code>, with <code>MAX-NUM-EPISODES</code> being 1 and <code>OBSERVERS</code> consisting of a progress-printer that outputs confirmation to standard output at regular intervals according to <code>STEP-PRINT-INC</code>, and a stat-gatherer that sums up the total reward during the episode, and return this total reward.  The overall evaluate function returns either a list of average total rewards if <code>POLICIES</code> is a sequence, or if <code>POLICIES</code> is a policy, just the average total reward of that policy.
+<li><code>io-interface ENVIRONMENT &rest ADVISORS</code>.  Call main loop on environment, with <code>MAX-NUM-STEPS</code> and <code>MAX-NUM-EPISODES</code> both being nil, with an observer that prints out what happens in the environment to standard output.  The policy is of type <code>&lt;prompt-policy&gt;</code> based on the given advisors.  ADVISORS can be of a variety of types, including Q-functions, value functions, policies, and feature functions.  At each step, the prompt-policy will print out the "advice" of each advisor about the current state, and then prompt the user to enter the action via standard input.
+</ul>
+
+<h3>State maintained during main loop</h3>
+
+The following state is maintained during main loop.
+
+<ul>
+<li>The environment state.  This is maintained by the environment internally.
+<li>The number of elapsed environment steps.
+<li>The number of elapsed episodes.
+</ul>
+
+<h3>Messages sent to observers</h3>
+
+The observers are of type <code>&lt;rl-observer&gt;</code>.  Observers can perform various functions, including implementing a reinforcement learning algorithm, printing progress to standard output, and collecting statistics about a run.  The model used for communication between the main loop and observers is that the main loop will, at various points, <i>broadcast</i> a message to the observers by calling the corresponding method on each of them.  The behaviour of an observer is controlled by changing what happens in response to the messages.  The default behaviour is to do nothing in response to any message.  To create a new observer, subclass <code>&lt;rl-observer&gt;</code> or <code>&lt;learning-algorithm&gt;</code> and implement one or more of the following methods:
+<ul>
+<li><code>inform-start-execution OBSERVER</code> : inform observer
+that the main reinforcement learning loop is about to commence.
+<li><code>inform-finish-execution OBSERVER</code> : inform observer
+that the main reinforcement learning loop has just terminated.
+<li><code>inform-start-episode OBSERVER STATE</code> : inform observer
+that a new episode is starting at a given state.
+<li><code>inform-env-step OBSERVER ACTION REWARD NEXT-STATE
+TERMINATION</code> : inform observer that an action has just been done
+in the environment, leading to a given new state and reward.
+</ul>
+
+
+<h3>What happens during the main loop</h3>
+
+The main loop consists of the following phases. 
+
+<ol>
+<li><b>Initialization</b>.  Broadcast a <code>inform-start-execution</code> message.  Set the number of elapsed environment steps and episodes to 0.  Reset the environment.  Broadcast a <code>inform-start-episode</code> message.
+<li><b>End-test</b>.  Check for termination as follows.  If <code>MAX-NUM-STEPS</code> is non-nil, and does not exceed the number of elapsed steps, we are done.  If <code>MAX-NUM-EPISODES</code> is non-nil, and does not exceed the number of elapsed episodes, we are done.  Otherwise, we are not done.  If done, go to step 4, if not go to step 3.
+<li><b>Body</b>.  If the environment is at a terminal state, reset it, increment the number of elapsed episodes, and broadcast a <code>inform-start-episode</code> message.  Ask the policy for an action in the current environment state using the function <code>make-choice</code>.   The policy may signal a <code>choose-to-abort</code> error, in which case go to step 4.  If not, do the returned action, and broadcast an <code>inform-env-step</code> message about the action, resulting reward and next state, and whether the next state is terminal.  Increment the number of elapsed steps.  Go to step 2.
+<li><b>Finalization</b>.  Broadcast a <code>inform-finish-execution</code> message.   Return.
+
+</body>
+
+</html>

@@ -1,0 +1,59 @@
+<html>
+<head>
+<title>Features for linear approximation to flat Q-function for taxi domain</title>
+</head>
+<body>
+<code>
+<pre>
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; features for lin approx to flat Q-fn in taxi domain
+;; taken from envs/taxi/td-taxi-flat-lfa.lisp
+;; note "fn" is a macro used to build up complex functions
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun make-featurizer (e)
+  (flet ((source-dist (s a)
+	   (shortest-path-dist e (result-legal e (taxi-pos s) a) (pass-source s)))
+	 (dest-dist (s a)
+	   (shortest-path-dist e (result-legal e (taxi-pos s) a) (pass-dest s))))
+    (lambda (s a)
+      (map 'vector
+	(lambda (f) (funcall f s a))
+	(list
+	 (constantly 1)
+	 #'will-have-pass
+	 #'will-dropoff-pass
+	 (fn (* (indicator have-pass?) source-dist) 2)
+	 (fn (* (indicator have-pass?) dest-dist) 2)
+	 (fn (* (indicator (not have-pass?)) source-dist) 2)
+	 (fn (* (indicator (not have-pass?)) dest-dist) 2))))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; helper functions
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun have-pass? (s a)
+  (declare (ignore a))
+  (eql (pass-loc s) *in-taxi*))
+
+(defun will-have-pass (s a)
+  (let ((ploc (pass-loc s)))
+    (indicator
+     (or (eql ploc *in-taxi*)
+	 (eql ploc *at-dest*)
+	 (and (equal (taxi-pos s) (pass-source s))
+	      (eql ploc *at-source*)
+	      (eql a *pickup*))))))
+
+(defun will-dropoff-pass (s a)
+  (indicator
+   (or (eql (pass-loc s) *at-dest*)
+       (and (equal (taxi-pos s) (pass-dest s))
+	    (eql (pass-loc s) *in-taxi*)
+	    (eql a *putdown*)))))
+
+</pre>
+</code>
+</body>
+</html>

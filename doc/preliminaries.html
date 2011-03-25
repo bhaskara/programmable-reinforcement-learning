@@ -1,0 +1,102 @@
+<html>
+
+<head>
+<title>
+ALisp Tutorial - Preliminaries
+</title>
+</head>
+
+<body>
+
+<h2>Preliminaries</h2>
+
+<h3>Introduction</h3>
+This tutorial is intended to get you familiar with ALisp.  It assumes
+that you have a working knowledge of Lisp, and a version of Common Lisp
+installed.
+
+The tutorial contains examples that illustrate the various features of
+ALisp.  Following along with these should give you a basic idea of
+how to use ALisp.  There are also exercises in each
+part.  Working through at least some of these is encouraged if you
+want to use or extend ALisp for your own purposes.
+
+Since this code is still in development, there may be various
+issues/bugs/inconveniences/incompabilities that you find.  Please <a
+href="http://www.cs.berkeley.edu/~bhaskara">contact</a> me with all of these.
+
+
+
+<h3>Obtaining and setting up ALisp</h3>
+
+Go to the <a href="http://www.cs.berkeley.edu/~bhaskara/alisp/download.html">download page</a> for
+instructions on how to download and install the ALisp system.
+
+Start up Lisp and change to the ALisp code root directory <code>alisp-system/lisp</code>.  Load and compile the code as follows :
+
+<blockquote>
+<pre><code>(load "hrl-system.lisp")
+(make-all)
+</code></pre></blockquote>
+<p>
+This should compile without warnings.  Next, to make sure the code is working, load the file
+<code>test/test-all.lisp</code>:
+<blockquote>
+<pre><code>(load "test/test-all.lisp")
+</code></pre></blockquote>
+<p>
+This will run scripts that test out various parts of the code.  The scripts should produce continuous output displaying their progress, and terminate in a few minutes, with no errors or warnings.
+
+<h3>Setting up Concurrent ALisp</h3>
+
+The ALisp system also includes an implementation of Concurrent ALisp.
+Because Common Lisp does not specify a standard for multithreading,
+our implementation is specific to Allegro Lisp, versions 6.2 or
+greater.  If you are using Allegro Lisp and want to use Concurrent
+ALisp, after starting Lisp, first type:
+
+<blockquote>
+<pre><code>(push ':concurrent-alisp *features*)
+</code></pre>
+</blockquote>
+<p>
+Then, follow the instructions in the previous section.  Finally, to
+check that concurrent ALisp has been installed properly, type
+
+<blockquote>
+<pre><code>(load "test/test-calisp.lisp")
+</code></pre>
+</blockquote>
+
+This will take a few minutes, but should produce continuous output
+displaying progress, and complete with no errors or warnings.
+
+<h3>Getting help</h3>
+
+Once the code is loaded into Lisp, the <code>help</code> function can
+be used to display documentation of various parts of the system.
+Calling <code>(help)</code> without arguments will list all packages
+for which help is available.  Otherwise, help is called with a single
+unevaluated symbol argument.  If there is a package having the same
+name as the given argument, documentation for that package will be
+printed.  For example, try <code>(help alisp-user)</code>.  If there
+are any functions or types having the same name as the provided
+symbol, help will print the documentation for each of them.  Try, for
+example, typing <code>(help learn)</code>.  For the rest of this
+tutorial, you can use the <code>help</code> function to find out more
+about the various parts of the system as they are introduced.
+
+There is also a set of scripts to make it easier to find definitions
+in the Lisp code.  They can be found in the <code>alisp-system/scripts</code> directory, and
+will require some basic knowledge of bash to adapt to your system.
+
+
+
+<h3>Acknowledgements</h3>
+
+I would like to acknowledge two excellent external pieces of code used by ALisp : Daniel Barlow's asdf package, and Tunc Simsek's help package.
+
+</body>
+
+</html>
+

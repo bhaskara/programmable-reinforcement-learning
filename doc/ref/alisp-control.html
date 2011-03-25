@@ -1,0 +1,177 @@
+<html>
+<body>
+<title>
+Specification of main loop for ALisp
+</title>
+</body>
+
+<h1>Main loop for ALisp</h1>
+
+This document describes what happens during the main control loop for
+ALisp, which we will refer to as the RLM (Reinforcement Learning
+Machine).  This information is useful when writing partial programs, or designing new kinds of observers, learning algorithms, and policy types.  The outline is:
+<nl>
+<li>Specification of the inputs that can be used to parametrize the RLM's behaviour.
+<li>Description of the exported functions (learn, evaluate, and io-interface) that call this main loop.
+<li>Description of the state that is maintained by the RLM.
+<li>Description of the kinds of messages that can be sent to observers.
+<li>Description of what happens at the top-level of the RLM.
+<li>Description of the specific operations that can be called by a partial program.
+</nl>
+
+<h2>Inputs</h2>
+
+An RLM takes the following inputs:
+<ul>
+<li>An environment <code>ENVIRONMENT</code>, of type <code>&lt;env&gt;</code>.
+<li>A partial program <code>PART-PROG</code>, which is either a function with no arguments, or object of type <code>&lt;alisp-program&gt;</code>.
+<li>A designator <code>OBSERVERS</code> for a list of <i>observers</i>, each of type <code>&lt;alisp-observer&gt;</code>.
+<li>A policy <code>POLICY</code>, of type <code>&lt;policy&gt;</code>.
+<li><code>MAX-NUM-STEPS</code>, which is either a fixnum or nil.
+<li><code>MAX-NUM-EPISODES</code>, which is either a fixnum or nil.
+</ul>
+
+<h2>Exported functions that use the main loop</h2>
+
+The following functions are available when using the <code>rl-user</code> package, as ways of accessing the main loop.
+
+<ul>
+<li><code>learn PART-PROG ENVIRONMENT POLICY OBSERVERS MAX-NUM-STEPS &key (HIST-LENGTH nil) (STEP-PRINT-INC 100) (EPISODE-PRINT-INC 10)</code>.  The main loop is called with the given partial program, environment, policy, and value of <code>MAX-NUM-STEPS</code>.  <code>MAX-NUM-EPISODES</code> is set to nil.  The observer list consists of <code>OBSERVERS</code> together with a <i>progress-printer</i> that sends confirmation to standard output at regular intervals according to <code>STEP-PRINT-INC</code> and <code>EPISODE-PRINT-INC</code>. All observers that are also of type <code>&lt;learning-algorithm&gt;</code> are set to collect history at regular intervals such that the total history length will be <code>HIST-LENGTH</code>.
+<li><code>evaluate PART-PROG ENVIRONMENT POLICIES &key (NUM-TRIALS 1) (NUM-STEPS nil) (STEP-PRINT-INC 100) (ENV-DISPLAY-STREAM nil) (PAUSE-AFTER-ACTIONS nil)</code>.  <code>POLICIES</code> is either a policy or a sequence of policies.  For each policy, average the results of doing the following <code>NUM-TRIALS</code> times: call the main loop with the given partial program, environment and policy and value of <code>MAX-NUM-STEPS</code>, with <code>MAX-NUM-EPISODES</code> being 1 and <code>OBSERVERS</code> consisting of a progress-printer that outputs confirmation to standard output at regular intervals according to <code>STEP-PRINT-INC</code>, and a stat-gatherer that sums up the total reward during the episode, and return this total reward.  The overall evaluate function returns either a list of average total rewards if <code>POLICIES</code> is a sequence, or if <code>POLICIES</code> is a policy, just the average total reward of that policy.
+<li><code>io-interface PART-PROG ENVIRONMENT &optional ADVISORS</code>.  Call main loop on the given partial program and environment, with <code>MAX-NUM-STEPS</code> and <code>MAX-NUM-EPISODES</code> both being nil, with an observer that prints out what happens in the environment to standard output.  The policy is of type <code>&lt;prompt-policy&gt;</code> based on the given advisors.  ADVISORS can be of a variety of types, including Q-functions, value functions, policies, and feature functions.  At each step, the prompt-policy will print out the "advice" of each advisor about the current state, and then prompt the user to enter the action via standard input.
+</ul>
+
+<h2>State maintained by RLM</h2>
+
+The following state is maintained by the RLM:
+
+<ul>
+<li>The environment state.  This is maintained by the environment internally.
+<li>The program state.  This is maintained by the partial program internally.
+<li>The number of elapsed environment steps.
+<li>The number of elapsed episodes.
+<li>A "choice stack" consisting of frames.  At any point, several nested choices and calls may be active, and the stack has a frame for each one.  Each frame has a name, a label which names the program location that frame is at, and a set of variable-value pairs, where each variable is a symbol and the corresponding value is an object.  The label of the most recent frame on the choice stack is also referred to as the <i>program counter</i>.
+<li>The current joint state type, which can be one of the symbols <code>action, call, choose, with-choice, call-exit, choose-exit, with-choice-exit, action-exit, or internal</code>.
+<li>The <a href="set.html">set</a> of choices available at this point in the program.
+</ul>
+
+
+
+<h2>Messages sent to observers</h2>
+
+The observers are of type <code>&lt;alisp-observer&gt;</code>, which is a subclass of <code>&lt;rl-observer</code>.  Observers may therefore implement the operations from that class, namely <code>inform-start-execution, inform-finish-execution, inform-start-episode, inform-env-step</code>.  In addition, there are two messages specific to ALisp, which may be used by ALisp learning algorithms and other ALisp observers.  As with rl-observers, these observers may assume that their arguments are fresh, i.e., the RLM will not modify them once it has sent them to the observers.
+<ul>
+<li><code>inform-alisp-step OBSERVER OMEGA CHOICE</code>.  Inform observer that, at joint state <code>OMEGA</code>, <code>CHOICE</code> was chosen (it might have been a trivial choice), and a new frame has been added to the choice stack as a result.
+<li><code>inform-end-choice-block OBSERVER OMEGA</code>.  Inform observer that the most recent frame has been popped off the choice stack.
+</ul>
+
+<h2>What happens during the main loop</h2>
+
+The main RLM loop consists of the following steps:
+
+<ol>
+<li><b>Initialization</b>.  Broadcast a <code>inform-start-execution</code> message.  Set the number of elapsed environment steps and episodes to 0.
+<li><b>Start new episode</b>.  Reset the environment.  Broadcast a <code>inform-start-episode</code> message.  Set the choice stack to consist of a single frame, with name being the symbol <code>top</code>, label nil, and an empty set of variable-value pairs.  Set the state type to <code>internal</code>.  Set the choice set  If the partial program is a function, call it.  Otherwise, if it is an object of type <code>&lt;alisp-program&gt;</code>, call its start method.
+<li><b>Execution of partial program</b>.  The partial program executes until either the last step is reached, or the environment terminates.  During execution, partial programs may interact with the RLM using various operations, which may in turn cause messages to be broadcast to observers, and choices to be requested from the policy. See the next section for a specification of how partial programs are executed.
+<li><b>End-test</b>.  If the environment is at a terminal state, increment the number of elapsed episodes.  If <code>MAX-NUM-STEPS</code> is non-nil, and does not exceed the number of elapsed steps, we are done.  If <code>MAX-NUM-EPISODES</code> is non-nil, and does not exceed the number of elapsed episodes, we are done.  Otherwise, we are not done.  If done, go to step 5, if not go to step 2.
+<li><b>Finalization</b>.  Broadcast a <code>inform-finish-execution</code> message.   Return.
+</ol>
+
+<h2>Execution of the partial program</h2>
+
+The ALisp language for partial programs can be viewed as consisting of standard Lisp, together with a set of new operations (these are implemented as Lisp macros).  At each step, if the next statement is <em>not</em> one of the new ALisp operations, then it is executed as in standard Lisp.  There are five ALisp operations: <code>action</code> does an action in the environment, <code>env-state</code> returns the current environment state, and <code>call</code>, <code>with-choice</code>, and <code>choose</code> are different ways of specifying nondeterministic choices and subtasks.  Here are detailed descriptions of the five operations:
+
+<h3>action</h3>
+<u>Syntax</u><br>
+<code>action LABEL ACTION</code>
+<br>
+<br>
+<u>Arguments</u><br>
+<ul>
+<li><code>LABEL</code> (unevaluated) is a symbol.
+<li><code>ACTION</code> evaluates to an object.
+</ul>
+<u>Description</u><br>
+Set the program counter to <code>LABEL</code>.  Set the current state type to <code>action</code>.  Broadcast an <code>inform-alisp-step</code> message with arguments the current state and <code>ACTION</code>.  Do the action in the environment attached to the RLM.  Broadcast an <code>inform-env-step</code> message using the resulting reward, destination state, and termination predicate value.  If the environment has terminated, signal an <code>env-terminated</code> condition.  Increment RLM's count of elapsed steps.  If <code>MAX-NUM-STEPS</code> is non-nil, and does not exceed the number of elapsed steps, signal an <code>rlm-last-step-reached</code> condition.
+<br>
+<br>
+<h3>env-state</h3>
+<u>Syntax</u><br>
+<code>env-state
+</code>
+<br>
+<br>
+<u>Arguments</u>
+<br>None
+<br>
+<br>
+<u>Description</u>
+<br>Return the current state of the environment.  The returned object should be treated as immutable by the partial program.
+<br>
+<br>
+<u>Notes</u>
+<br>Often, partial programs will not directly use <code>env-state</code> but instead use <code>def-env-accessor</code> to define functions that return particular parts of that state.  See <a href="../../lisp/alisp-examples/taxi/td-taxi-prog.lisp">here</a> for an example.
+
+<br>
+<br>
+<h3>with-choice</h3>
+<u>Syntax</u><br>
+<code>with-choice LABEL (VAR CHOICES) &rest BODY</code>
+<br>
+<br>
+<u>Arguments</u>
+<br>
+<ul>
+<li><code>LABEL</code>  (unevaluated) is a symbol.
+<li><code>VAR</code>  (unevaluated) is a symbol.
+<li><code>CHOICES</code>  evaluates to a <a href="set.html">set</a> of choices.
+<li><code>BODY</code> is a sequence of forms.
+</ul>
+<br>
+<u>Description</u>
+<br>
+Set the program counter to <code>LABEL</code>.  Set the RLM state type to <code>with-choice</code>.  Set the RLM choice set to <code>choices</code>.  Ask the RLM's policy for a choice <code>choice</code> using <code>make-choice</code>.   Broadcast an <code>inform-alisp-step</code> message with arguments the current state and <code>choice</code>.  Push a new frame onto the stack.  The frame has name <code>label</code>, label <code>nil</code>, and a single variable-value pair consisting of <code>VAR</code> and <code>choice</code>.  Execute <code>BODY</code> with the symbol <code>VAR</code> bound to <code>choice</code>.  The body will either terminate normally, or because of a rlm-last-step-<code>reached</code> or env-<code>terminated</code> condition being signalled.  In either case, pop the stack once the body has finished.  Set the state type to <code>with-choice-exit</code>, the program counter to a symbol whose name is the name of <code>LABEL</code> with "-exit" concatenated at the end, and the choice set to <code>(no-choice)</code>.  Broadcast an <code>end-choice-block</code> message and return the return value of <code>BODY</code>.
+<br>
+<br>
+<h3>choose</h3>
+<u>Syntax</u><br>
+<code>choose LABEL &rest CHOICES</code>
+<br>
+<br>
+<u>Arguments</u>
+<br>
+<ul>
+<li><code>LABEL</code> (unevaluated) is a symbol.
+<li><code>CHOICES</code> (unevaluated) is a list.  Two syntaxes are possible.  In the first case, each element is of the form <code>(CHOICE-NAME CHOICE-FORMS)</code> where <code>CHOICE-NAME</code> is not the symbol <code>call</code>.  In this case, the list of <i>choice labels</i> is said to consist of the <code>CHOICE-NAME</code>s and the list of <i>choice forms</i> is said to consist of the <code>CHOICE-FORMS</code> surrounded by an implicit <code>progn</code>.   In the second case, each element is of the form <code>(call ARGS)</code> where <code>ARGS</code> is the list of arguments to an ALisp <code>call</code> statement, except that the <code>choose-arg</code> construct may not be used, and the label argument may not be provided.  In this case, the list of choice labels consists of the first element of each <code>ARGS</code> and the the list of choice forms consists of all the <code>(call ARGS</code> statements.
+</ul>
+<br>
+<u>Description</u>
+<br>
+Set the program counter to <code>LABEL</code>.  Set the RLM state type to <code>choose</code>.  Set the choice set to the list of choice labels.  Ask the RLM's policy for a choice <code>choice</code> using <code>make-choice</code>.  Broadcast an <code>inform-alisp-step</code> message with arguments the current state and <code>choice</code>.  Push a new frame onto the stack with name <code>choice</code>, label <code>nil</code>, and no variable-value pairs.  Execute the choice form corresponding to <code>choice</code>.    The body will either terminate normally, or because of a rlm-last-step-<code>reached</code> or env-<code>terminated</code> condition being signalled.  In either case, pop the stack once the body has finished.  Set the state type to <code>choose-exit</code>, the program counter to a symbol whose name is the name of <code>LABEL</code> with "-exit" concatenated at the end, and the choice set to <code>(no-choice)</code>.  Broadcast an <code>end-choice-block</code> message and return the return value of the executed choice form.
+<br>
+<br>
+<h3>call</h3>
+<u>Syntax</u><br>
+<code>call [LABEL] (FN-NAME &rest ARGS)</code>
+<br>
+<br>
+<u>Arguments</u>
+<br>
+<ul>
+<li><code>LABEL</code> (unevaluated) is a symbol.  Optional, and if not provided, defaults to <code>FN-NAME</code>.
+<li><code>FN-NAME</code> (unevaluated) is a symbol.
+<li><code>ARGS</code> (unevaluated) is a list of arguments.  Each
+entry of this list is either of the form <code>(choose-arg
+CHOICE-SET)</code> (where <code>CHOICE-SET</code> is evaluated) or
+not.  In the first case, the argument is said to be
+<em>unspecified</em>. In the second case, the argument is evaluated.
+</ul>
+<br>
+<u>Description</u>
+<br>
+Set the program counter to <code>LABEL</code>.  Set the RLM state type to <code>call</code>.  If there are no unspecified arguments, set the choice set to <code>(no-choice)</code>.  If there is a single unspecified argument, set the choice set to the unspecified argument's choice set.  Finally, if there are multiple unspecified arguments, set the choice set to consist of the set of lists of items, consisting of one item from each unspecified argument's choice set (from left to right).  Ask the RLM policy for a choice <code>choice</code> using <code>make-choice</code>.  Broadcast an <code>inform-alisp-step</code> message with arguments the current state and <code>choice</code>.  Make a new frame with name <code>FN-NAME</code>, label <code>nil</code>, and one variable-value pair per argument.  The variable names are extracted from the function definition of <code>FN-NAME</code>.  Now that we have made the choice, there is enough information to fill in values for each variable.  Call the function with the given arguments. It will either terminate normally, or because of a <code>rlm-last-step-reached</code> or <code>env-terminated</code> condition being signalled.  In either case, pop the stack once the body has finished.  Set the state type to <code>call-exit</code>, the program counter to a symbol whose name is the name of <code>LABEL</code> with "-exit" concatenated at the end, and the choice set to <code>(no-choice)</code>.  Broadcast an <code>end-choice-block</code> message and return the return value of the function.
+
+
+</body>
+
+</html>

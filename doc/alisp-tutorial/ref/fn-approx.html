@@ -1,0 +1,17 @@
+<html>
+<head>
+<title>Creating new function approximation architectures</title>
+</head>
+<body>
+<h1>Creating new function approximation architectures</h1>
+
+The <code>fn-approx</code> package defines the top-level class
+<code>&lt;fn-approx&gt;</code>.  To create new approximation
+architures, subclass this.  Subclasses must implement:
+<ul>
+<li><code>reset F</code> resets the parameters of the function approximator to their initial values.</li>
+<li><code>evaluate F</code> evaluates the function (using the current parameters) at input <code>x</code>.</li>
+<li><code>update X Y STEP-SIZE</code> updates the parameters based on observing that the value at <code>x</code> is <code>y</code>.</li>
+<li><code>clone F</code> makes a copy of the approximator by copying the parameters.</li>
+</ul>
+

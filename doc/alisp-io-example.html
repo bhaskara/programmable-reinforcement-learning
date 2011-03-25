@@ -1,0 +1,267 @@
+<html>
+<head>
+<title>
+Example of ALisp io-interface
+</title>
+</head>
+<body>
+<code>
+<pre>
+CL-USER(12): (use-package 'td-taxi-prog)
+Error: Using package `TD-TAXI-PROG' results in name conflicts for these symbols: P N PUT-PASS E D LOC TASK-CHOICE
+       TD-TAXI-PROG TASK-CHOICE-EXIT GET-PASS NAV-SRC NAV-DEST-EXIT W NAV-DEST NAV-CHOICE S NAV-CHOICE-EXIT NAV
+       NAV-SRC-EXIT
+  [condition type: PACKAGE-ERROR]
+
+Restart actions (select using :continue):
+ 0: Unintern the conflicting symbols from the `COMMON-LISP-USER' package.
+ 1: Return to Top Level (an "abort" restart).
+ 2: Abort entirely from this process.
+[1c] CL-USER(13): :cont
+T
+CL-USER(14): (alisp-user:io-interface p e)
+Starting execution.
+
+Beginning new episode in state 
+XXXXX
+X X X
+X  tX
+XXXXX
+Source : (1 0)  Dest : (1 1)  Fuel : 1
+
+At state 
+&lt;&lt;ALisp choose state at TASK-CHOICE with choice-set #(GET-PASS PUT-PASS)
+Env state 
+XXXXX
+X X X
+X  tX
+XXXXX
+Source : (1 0)  Dest : (1 1)  Fuel : 1
+Stack ((TOP TASK-CHOICE NIL))&gt;&gt;.
+Set of available choices is #(GET-PASS PUT-PASS)
+--------------------------------------------------
+Please enter choice, or nil to terminate. get-pass
+
+At state with label TASK-CHOICE, chose GET-PASS
+
+At state 
+&lt;&lt;ALisp call state at NAV-SRC with choice-set (NO-CHOICE)
+Env state 
+XXXXX
+X X X
+X  tX
+XXXXX
+Source : (1 0)  Dest : (1 1)  Fuel : 1
+Stack ((GET-PASS NAV-SRC NIL) (TOP TASK-CHOICE NIL))&gt;&gt;.
+Set of available choices is (NO-CHOICE)
+--------------------------------------------------
+Please enter choice, or nil to terminate. n
+Warning: N is not a valid choice, but using default value NO-CHOICE instead.
+
+At state with label NAV-SRC, chose NO-CHOICE
+
+At state 
+&lt;&lt;ALisp with-choice state at NAV-CHOICE with choice-set (N E S W)
+Env state 
+XXXXX
+X X X
+X  tX
+XXXXX
+Source : (1 0)  Dest : (1 1)  Fuel : 1
+Stack ((NAV NAV-CHOICE ((LOC 1 0))) (GET-PASS NAV-SRC NIL) (TOP TASK-CHOICE NIL))&gt;&gt;.
+Set of available choices is (N E S W)
+--------------------------------------------------
+Please enter choice, or nil to terminate. w
+
+At state with label NAV-CHOICE, chose W
+
+At state with label NAV-MOVE, chose W
+
+Action W was done in the environment, yielding reward -0.1.  New state is 
+XXXXX
+X X X
+X t X
+XXXXX
+Source : (1 0)  Dest : (1 1)  Fuel : 1. 
+
+Leaving choice block.
+
+At state 
+&lt;&lt;ALisp with-choice state at NAV-CHOICE with choice-set (N E S W)
+Env state 
+XXXXX
+X X X
+X t X
+XXXXX
+Source : (1 0)  Dest : (1 1)  Fuel : 1
+Stack ((NAV NAV-CHOICE ((LOC 1 0))) (GET-PASS NAV-SRC NIL) (TOP TASK-CHOICE NIL))&gt;&gt;.
+Set of available choices is (N E S W)
+--------------------------------------------------
+Please enter choice, or nil to terminate. w
+
+At state with label NAV-CHOICE, chose W
+
+At state with label NAV-MOVE, chose W
+
+Action W was done in the environment, yielding reward -0.1.  New state is 
+XXXXX
+X X X
+Xt  X
+XXXXX
+Source : (1 0)  Dest : (1 1)  Fuel : 1. 
+
+Leaving choice block.
+
+Leaving choice block.
+
+At state with label PICKUP, chose P
+
+Action P was done in the environment, yielding reward -0.1.  New state is 
+XXXXX
+X X X
+XT  X
+XXXXX
+Source : (1 0)  Dest : (1 1)  Fuel : 1. 
+
+Leaving choice block.
+
+At state 
+&lt;&lt;ALisp choose state at TASK-CHOICE with choice-set #(GET-PASS PUT-PASS)
+Env state 
+XXXXX
+X X X
+XT  X
+XXXXX
+Source : (1 0)  Dest : (1 1)  Fuel : 1
+Stack ((TOP TASK-CHOICE NIL))&gt;&gt;.
+Set of available choices is #(GET-PASS PUT-PASS)
+--------------------------------------------------
+Please enter choice, or nil to terminate. put-pass
+
+At state with label TASK-CHOICE, chose PUT-PASS
+
+At state 
+&lt;&lt;ALisp call state at NAV-DEST with choice-set (NO-CHOICE)
+Env state 
+XXXXX
+X X X
+XT  X
+XXXXX
+Source : (1 0)  Dest : (1 1)  Fuel : 1
+Stack ((PUT-PASS NAV-DEST NIL) (TOP TASK-CHOICE NIL))&gt;&gt;.
+Set of available choices is (NO-CHOICE)
+--------------------------------------------------
+Please enter choice, or nil to terminate. j
+Warning: J is not a valid choice, but using default value NO-CHOICE instead.
+
+At state with label NAV-DEST, chose NO-CHOICE
+
+At state 
+&lt;&lt;ALisp with-choice state at NAV-CHOICE with choice-set (N E S W)
+Env state 
+XXXXX
+X X X
+XT  X
+XXXXX
+Source : (1 0)  Dest : (1 1)  Fuel : 1
+Stack ((NAV NAV-CHOICE ((LOC 1 1))) (PUT-PASS NAV-DEST NIL) (TOP TASK-CHOICE NIL))&gt;&gt;.
+Set of available choices is (N E S W)
+--------------------------------------------------
+Please enter choice, or nil to terminate. n
+
+At state with label NAV-CHOICE, chose N
+
+At state with label NAV-MOVE, chose N
+
+Action N was done in the environment, yielding reward -0.1.  New state is 
+XXXXX
+XTX X
+X   X
+XXXXX
+Source : (1 0)  Dest : (1 1)  Fuel : 1. 
+
+Leaving choice block.
+
+At state 
+&lt;&lt;ALisp with-choice state at NAV-CHOICE with choice-set (N E S W)
+Env state 
+XXXXX
+XTX X
+X   X
+XXXXX
+Source : (1 0)  Dest : (1 1)  Fuel : 1
+Stack ((NAV NAV-CHOICE ((LOC 1 1))) (PUT-PASS NAV-DEST NIL) (TOP TASK-CHOICE NIL))&gt;&gt;.
+Set of available choices is (N E S W)
+--------------------------------------------------
+Please enter choice, or nil to terminate. s
+
+At state with label NAV-CHOICE, chose S
+
+At state with label NAV-MOVE, chose S
+
+Action S was done in the environment, yielding reward -0.1.  New state is 
+XXXXX
+X X X
+XT  X
+XXXXX
+Source : (1 0)  Dest : (1 1)  Fuel : 1. 
+
+Leaving choice block.
+
+At state 
+&lt;&lt;ALisp with-choice state at NAV-CHOICE with choice-set (N E S W)
+Env state 
+XXXXX
+X X X
+XT  X
+XXXXX
+Source : (1 0)  Dest : (1 1)  Fuel : 1
+Stack ((NAV NAV-CHOICE ((LOC 1 1))) (PUT-PASS NAV-DEST NIL) (TOP TASK-CHOICE NIL))&gt;&gt;.
+Set of available choices is (N E S W)
+--------------------------------------------------
+Please enter choice, or nil to terminate. e
+
+At state with label NAV-CHOICE, chose E
+
+At state with label NAV-MOVE, chose E
+
+Action E was done in the environment, yielding reward -0.1.  New state is 
+XXXXX
+X X X
+X T X
+XXXXX
+Source : (1 0)  Dest : (1 1)  Fuel : 1. 
+
+Leaving choice block.
+
+Leaving choice block.
+
+At state with label DROPOFF, chose D
+
+Action D was done in the environment, yielding reward 0.9.  New state is 
+XXXXX
+X X X
+X t X
+XXXXX
+Source : (1 0)  Dest : (1 1)  Fuel : 1. The episode has terminated.
+
+Leaving choice block.
+
+The partial program has terminated at state 
+&lt;&lt;ALisp internal state at INTERNAL with choice-set NOT-AT-CHOICE
+Env state 
+XXXXX
+X X X
+X t X
+XXXXX
+Source : (1 0)  Dest : (1 1)  Fuel : 1
+Stack ((TOP TASK-CHOICE-EXIT NIL))&gt;&gt;.
+Start a new episode?n
+
+Execution complete.
+NIL
+CL-USER(15): 
+</pre>
+</code>
+</body>
+</html>

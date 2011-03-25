@@ -1,0 +1,53 @@
+The first one is called after each step in the environment, and
+includes as parameters the action, destination state, reward, and
+whether the new state is terminal. The second is called at the start of
+each episode, and has a parameter for the initial state. The last two
+are called at the start and end of the overall main loop. 
+
+For example, the gold standard algorithm inherits from <code>&lt;q-learning-algorithm&gt;</code> 
+and <code>&lt;model-learning-algorithm&gt;</code> (recall that CLOS has multiple inheritance).  
+As a result, it must implement <code>get-q-fn</code> and <code>get-mdp</code> which take in a knowledge-state 
+from the history and return the corresponding q-function and mdp respectively.
+
+
+ALisp consists of all of standard Lisp, together
+with the following new operations :
+<ul>
+<li> <code>(action a)</code> : do <code>a</code> in the environment. </li>
+ 
+<li> <code>(get-state)</code> : get the state of the environment.  </li>
+<li> <code>(with-choice (v l) body)</code> : execute body with variable <code>v</code> bound to an element of list <code>l</code>.
+The program doesn't specify in advance how to make this choice.
+Instead, it will learn by experience how to make the choice (as a
+function of the current environment and program state).</li>
+<li> <code>(call function-call)</code> : do the function call, and
+inform the ALisp system that a new subtask has been entered. The idea
+is that we can improve the performance of learning algorithms by making
+use of the task structure.</li>
+</ul>
+
+The <code>call</code> is implemented as a trivial choice with one possibility, and so all function calls done using <code>call</code> are present on the choice stack.
+
+<code>(inform-arrive-choice omega)</code> : inform observer that we've just reached a choice with joint state <code>omega</code>.</li>
+<li><code>(inform-choice-made omega u)</code> : inform observer that choice <code>u</code> was made at <code>omega</code>.</li>
+<li><code>(inform-leave-choice)</code> : inform observer that we've just left the body of the highest choice in the choice stack.</li>
+<li><code>(inform-part-prog-terminated</code> : inform  observer that the partial program has terminated.</li>
+
+<p>
+In the example given, we define the choice points and subtasks as the following:</p>
+<blockquote>
+<code>nav</code>: until we reach the destination specified by loc, choose from '(N E S W) and set that choice to be dir; label this choice nav-choice and execute dir as a move action<br>
+<code>get-pass</code>: call the partial program subtask nav to get to the passenger's source location, and then execute a pick up action</br>
+<code>put-pass</code>: call the partial program subtask nav to get to the passenger's destination location, and then execute a drop action</br>
+</blockquote>
+
+We then combine the choices in a hierarchical manner in order to define the partial program's structure.  For this purpose, we use
+the <code>choose</code> function, which determines a root choice point (labeled <code>top</code>) as the repeated getting and putting
+of passengers, as you might expect from a taxi:
+
+<blockquote><code>
+(defun td-taxi-prog ()
+  (loop 
+    (choose top 
+	    (call get-pass ())
+	    (call put-pass ()))))</code></blockquote>

@@ -1,0 +1,233 @@
+<html><head><title>ALisp Tutorial - ALisp</title></head>
+
+<body>
+
+<h2>ALisp</h2>
+
+ALisp is a language that allows constraints on policies to be specified
+using 'partial programs'. For more details about the language and its semantics, see the
+<a href="ref/alisp-control.html">alisp reference</a> section.
+
+<h3>Creating partial programs</h3>
+
+<p>
+Partial programs must be either functions with no arguments, or subclasses of <code>&lt;alisp-program&gt;</code>, which implement a method for <code>start</code>.  
+</p>
+
+<p>
+We use an example partial program for the taxi domain adapted from (Andre+Russell:2002) as a running example:
+</p><blockquote>
+<code>(setf p #'td-taxi-prog:td-taxi-prog)</code></blockquote>
+
+<p>
+A partial program should reflect what we want to do in the enviroment.
+Recall that for the taxi environment, we're rewarded for dropping
+passengers off at their destination locations.  So, our general task
+can be described as first getting a passenger from a source location,
+and then going to the destination location and dropping him off.  Now,
+in this particular example, the choice of whether to do a pickup or
+dropoff is trivial.  In general, however, the choice of top level
+action may not be obvious (for example, if there was an action for
+refuelling).  For explanatory purposes, we therefore create a choice
+at the top-level:
+
+<blockquote><code><pre>
+(loop 
+  (choose task-choice
+    (call (get-pass))
+    (call (put-pass))))</pre></code></blockquote>
+
+The keyword <code>choose</code> sets a choice (called <code>top</code>) for the partial program between <code>get-pass</code> and
+<code>put-pass</code>.  The program does not specify which of these
+choices to - that information is learnt in the form of a
+<i>completion</i>, which we will describe later.  Note that the choice can, in general, depend on
+the environment state and possibly the state of the program
+(e.g. values of variables).
+
+What should <code>get-pass</code> do? Well, we want to get a passenger, which in the taxi environment requires navigating to
+his location first and then executing a pick-up action.  So, our code looks like this:
+
+<blockquote><code><pre>
+(defun get-pass ()
+  (call nav-src (nav (passenger-src)))
+  (action pickup 'P))
+</pre></blockquote></code>
+
+Note that there are no choices to be made at this level of the partial
+program - assuming <code>nav</code> gets us to the passenger's
+location, we always want to pick up the passenger.  Note that the function call <code>(passenger-src)</code> is assumed to extract the source of the passenger in the current environment state.  See the full source file <a href="../lisp/alisp-examples/taxi/td-taxi-prog.lisp">here</a> for details.
+
+
+
+<p>
+Likewise, <code>put-pass</code> should navigate to the passenger's destination
+location and then execute a drop action in the environment:
+
+<blockquote><code><pre>
+(defun put-pass ()
+  (call nav-dest (nav (passenger-dest)))
+  (action dropoff 'D))
+</pre></blockquote></code>
+
+Finally, how should we have the taxi navigate? In the taxi environment, we only have four navigation actions: N, E, S, and W.
+Therefore, it makes sense that navigate should continuously choose one of those actions to execute until it reaches the location desired.
+Since we may not know in advance how to navigate optimally, we set up
+a choice point:
+
+<blockquote><code><pre>
+(defun nav (loc)
+  (until (equal (pos) loc)
+    (with-choice nav-choice (dir '(N E S W))
+		 (action nav-move dir)))) 
+</pre></blockquote></code>
+
+And there we have our partial program.  The full listing can be found
+in <a
+href="../lisp/alisp-examples/taxi/td-taxi-prog.lisp">alisp-examples/taxi/td-taxi-prog.lisp</a>.
+
+
+
+<h3>Interacting with a partial program</h3>
+
+<p>
+To see how this partial program 'works', we can use <code>alisp-user:io-interface</code>, which is similar to the <code>rl:io-interface</code>
+function shown earlier. The only difference is that now, information
+about events in the partial program as well as events in the
+environment is printed, and instead of entering what actions to do in
+the environment, the user must enter what choice to make at each choice
+state. Here is an <a href="alisp-io-example.html">example interaction</a>.
+</p><p>
+
+<p>
+Note the various stack calls as the partial program runs through the choice points.  As you can see, choices may be 
+nested in a partial program. During execution, there is
+a 'choice stack', analogous to a standard call stack. A choice is added
+to this stack when its body is entered, and removed when its body is
+exited. 
+
+</p><p>
+<b>Exercise</b> : write a partial program for some environment you've created, and verify that it works as expected.
+
+</p><h3>Learning a completion</h3>
+<p>
+A partial program by itself does not uniquely say how to act in the
+environment due to the choice statements. To execute a partial program,
+we therefore need a <em>completion</em>, which says how the choices
+are made.  The completion is allowed to look at the current <em>joint
+state</em>, which includes the state of the environment as well as the
+<em>machine state</em>, which in turn consists of the runtime stack
+and global memory (the number of joint states could, of course, be
+large in practical examples, and we will shortly discuss how to use
+function approximation methods to simplify the learning problem).  
+Completions of a partial program are represented as objects of type <code>&lt;policy&gt;</code> that take a joint state and return a choice.
+</p>
+<p>
+The model for our alisp implementation can be summarized in the following
+diagram (note the similarities and differences with respect to the reinforcement 
+learning model): <br>
+<img src="alisp-diagram.jpg">
+
+<br>
+
+The main difference from the architecture in the flat case is that, rather than having a policy that directly specifies actions to take in the environment, there is a completion that decides choices to make in the partial program.  The partial program in turn specifies actions to do in the environment.  For a precise description of what happens during the main loop, see <a href="ref/alisp-control.html">here</a>.   The dotted line between the environment and partial program is because the partial program must do actions that are legal in the environment, and the dotted line between the completion and partial program is because the completion must return choices that are legal at the current state of the partial program.  If either of these does not happen, an error will be signalled.
+</p>
+</ul>
+<p>As an example, the following creates an instance of the SMDP
+Q-learning algorithm (with a tabular Q-function), and does learning.
+</p><blockquote>
+<code><pre>(progn (setf smdpq-learner (alisp-smdpq:make-smdpq-alg))
+       (alisp-user:learn p e 'random smdpq-learner 10000 :hist-length 100))
+</pre></code>
+</blockquote>
+
+<h3>Analyzing the results of learning</h3>
+<p>
+We can generate learning curves as before :
+</p><blockquote>
+<code><pre>CL-USER(134): (progn (setf policy-hist (alisp-user:get-policy-hist smdpq-learner))
+		     (pprint (alisp-user:evaluate p e policy-hist :num-steps 25 :num-trials 5)))
+Evaluating policies....................................................................................................
+#(-7.62 -9.5 -9.6 -7.3 -2.9 -7.5 -7.4 -6.06 -11.9 -4.8 -6.36 -4.9 -2.5
+  -1.88 -7.3 -0.64 -4.38 -2.5 -4.9 -2.5 -1.88 -6.88 -4.38 -2.5 -5.0
+  -5.0 -2.5 -2.5 -2.5 -2.5 -5.0 -2.5 -2.5 -5.0 -2.5 -1.88 -2.5 -2.5
+  -1.88 -2.5 -2.5 -2.5 -1.88 -2.5 -2.5 -2.5 -2.5 -1.88 -2.5 -2.5 -2.5
+  -2.5 -2.5 -2.5 -2.5 -2.5 -2.5 -2.5 -2.5 -2.5 -2.5 -2.5 -2.5 -2.5 -2.5
+  -2.5 -2.5 -2.5 -2.5 -2.5 -2.5 -2.5 -2.5 -2.5 -2.5 -2.5 -2.5 -2.5 -2.5
+  -2.5 -2.5 -2.5 -2.5 -2.5 -2.5 -2.5 -2.5 -2.5 -2.5 -2.5 -1.88 -1.88
+  -1.88 -1.88 -2.5 -1.88 -2.5 -1.88 -1.26 -1.26)
+</pre></code>
+</blockquote>
+<p>
+Finally, we can examine the learnt Q-functions using, for example :
+</p><blockquote>
+<code><pre>(progn (setf q-hist (alisp-user:get-q-hist smdpq-learner))
+       (alisp-user:io-interface p e (list (aref q-hist 5) (aref q-hist 95))))
+</pre></code>
+</blockquote>
+
+<h3>Hierarchical learning and state abstraction</h3>
+<p>One of the attractions of ALisp and related formalisms like MAXQ is
+that the task decomposition induced by an ALisp program leads to a
+decomposition of the Q-function, in which each component is amenable to
+state abstraction. Recall that the Q-function given some omega and u is
+the expected total future rewards if we choose u in omega and choose
+optimally thereafter. Let the parent choice be the choice which was on
+the top of the stack when u was chosen. Q can then be decomposed as a
+sum of 3 components :
+</p><ul>
+<li>Qr is the expected total rewards received during the body of u.</li>
+<li>Qc is the expected total rewards received after leaving the body of u, but before leaving the body of the parent choice.</li>
+<li>Qe is the expected total rewards received after leaving the parent choice.</li>
+</ul>
+<p>Hierarchically optimal recursively decomposed Q-learning (HORDQ) is
+an algorithm that learns the three components separately. We can repeat
+the earlier learning experiment using HORDQ :
+</p><blockquote>
+<code><pre>(progn (setf hordq-learner (make-instance 'ahq:&lt;hordq&gt;))
+       (alisp-user:learn p e 'random hordq-learner 10000 :hist-length 100))
+</pre></code>
+</blockquote>
+
+Try examining the learnt Q-functions - each of the components will be shown separately.
+<p>
+The main use of the 3-part decomposition is that each component will
+depend on a small number of state variables.  For example, in the taxi
+domain, Qr of a navigation choice does not depend on the source
+location of the passenger.  Currently, the programmer must specify the
+state abstractions.  This is done by a specifying a feature function,
+as before, when we were doing function approximation in the flat case.
+
+</p><p> Here is an example <a
+href="../lisp/alisp-examples/taxi/td-taxi-prog-features.lisp">feature
+function</a> for the taxi domain.  The feature function uses several
+utility functions to access the joint state.  More details can be
+found by typing <code>(help alisp-features)</code>.  We can use this
+feature function together with HORDQ learning:
+<p><blockquote>
+<code><pre>(progn (setf state-abstracted-hordq (make-instance 'ahq:&lt;hordq&gt;))
+       (alisp-user:learn p e 'random state-abstracted-hordq 10000 :hist-length 100))
+</pre></code>
+</blockquote>
+<p>
+In the taxi example, state abstraction gives a definite improvement.
+<p>
+<b>Exercise</b> : Figure out what state abstractions apply for the
+components of the Q-function for the partial program you created in the
+previous exercise. Write a corresponding feature function and try out
+HORDQ learning. How much does state abstraction help?
+</p><p>
+<b>Exercise</b> : Try using function approximation together with SMDPQ and HORDQ.
+</p><p>
+<b>Exercise</b> : Come up with a new learning algorithm for ALisp
+programs (SARSA, policy search, model-based learning, others...).
+Implement and compare with Q-learning.
+</p><p>
+
+
+
+
+
+
+
+
+</p></body></html>

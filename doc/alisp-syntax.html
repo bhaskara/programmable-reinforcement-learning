@@ -1,0 +1,462 @@
+<html>
+<head>
+<title>ALisp syntax proposal</title>
+</head>
+<body>
+
+
+<h1>Overview</h1>
+
+This document contains a proposed syntax for ALisp.  Contents :
+<p>
+<a href="#ops"><h3>Operations in partial programs</h3></a>
+
+Defining subroutines<br>
+<ul>
+<li><a href="#defsubroutine"><code>defsubroutine</code></a>
+</ul>
+<p>
+Choices<br>
+<ul>
+<li><a href="#call"><code>call</code></a>
+<li><a href="#choose"><code>choose</code></a>
+<li><a href="#with-choice"><code>with-choice</code></a>
+</ul>
+<p>
+Interacting with the environment<br>
+<ul>
+<li><a href="#action"><code>action</code></a>
+<li><a href="#get-state"><code>get-state</code></a>
+</ul>
+<p>
+Altering the memory state<br>
+<ul>
+<li><a href="#mem"><code>mem</code></a>
+<li><a href="#gmem"><code>gmem</code></a>
+</ul>
+<p>
+<a href="#state"><h3>Contents of the joint state</h3></a>
+
+<a href="#running"><h3>Running an ALisp program</h3></a>
+
+<a href="#glossary"><h3>Glossary</h3></a>
+
+
+
+
+
+<a name="ops"><h1>Basic ALisp Operations</h1></a>
+
+<a name="defsubroutine">
+<h2><i>Macro</i> defsubroutine</h2>
+</a>
+
+<h3>Syntax</h3>
+<code>defsubroutine <i>function-name lambda-list</i> &rest <i>args</i></code>
+
+<h3>Arguments</h3>
+<ul>
+<li><i>function-name</i> - A symbol (not evaluated) 
+<li><i>lambda-list</i> - A lambda list
+<li><i>args</i> - The remaining args are the same as for the macro <a href="http://www.cs.cmu.edu/Groups/AI/html/hyperspec/HyperSpec/Body/mac_defun.html#defun"><code>defun</code></a> in common Lisp
+</ul>
+
+<h3>Description</h3>
+
+Defines a new function named <i>function-name</i> in the global
+environment, using <code>defun</code>.  In addition, causes the <a
+href="#subroutine-description">subroutine description</a> to be added
+to <a href="#subroutine-description-table"><code>*subroutine-description-table*</code></a>
+with key <i>function-name</i>.	This has the effect that, if this
+function is invoked elsewhere in the code using <code>call</code>, the <a href="#variable-name">variable names</a> of <a href="#frame-entry">frame entries</a> in the corresponding <a href="#choice-stack-frame">choice stack frame</a> will be set using <i>lambda-list</i>.
+</ol>
+
+<h3>Discussion of design choices</h3>
+
+I chose to have a separate construct for this rather than shadow <code>defun</code> because I wanted to keep the possibility of just defining a function in the normal way.  For example, if the user writes a <code>compute-shortest-path-to-goal</code> helper function that contains no choice points, there's no need to add it to the Alisp subroutine descriptions.   <code>defsubroutine</code> is reserved for functions that really correspond to some ``task'' in the environment.
+
+
+<a name="call">
+<h2><i>Macro</i> call</h2>
+</a>
+
+<h3>Syntax</h3>
+<code>call <i>function-name</i> &rest <i>args</i></code>
+<p>
+<h3>Arguments</h3>
+<i>function-name</i>, not evaluated, is the name of an ALisp subroutine<br>
+<i>args</i>, not evaluated, is a <a href="#lambda-list-with-choices">lambda-list with choices</a>.
+<p>
+<h3>Description</h3>
+Expands to code that :
+<ol>
+<li>Updates the <a href="#program-counter">program counter</a>.
+<li>Sets the <a href="#next-frame">next frame</a> of the current joint state to be a new <a href="#frame">frame</a> with label <i>function-name</i>.
+<li>For each parameter that is <a href="#specified">specified</a> by <i>args</i>, looks up its name in <code>*subroutine-description-table*</code>, and adds a <a href="#frame-entry">frame entry</a> to the new frame using the parameter name and corresponding value from <i>args</i>.  For unspecified parameters, adds a frame entry whose value is the symbol <code>unspecified</code>.
+<li>Uses the <a href="#currently-active-completion">currently active
+completion</a> to make a choice, which is a list including, for each argument in <i>args</i> that is not specified, a value from its <a href="#choice-list">choice list</a> (which is evaluated).  The completion is given a <a href="#copy">copy</a> of the joint state.
+<li>Informs all <a href="#observer">observers</a> about the choice that has been made at this joint state.  The observers receive a copy of the joint state.
+<li>Fills in the unspecified parameters of the new frame using a the choice that was made.
+<li>Adds the new frame to the <a href="#choice-stack">choice stack</a> .
+<li>Calls the function named by <i>function-name</i> with the specified and chosen arguments.
+<li>Informs all observers that the <a href="#choice-block">choice block</a> is about to be exited.
+<li>Removes the top element from the choice stack.
+<li>Returns the return value of the call to <i>function-name</i>.
+</ol>
+
+<h3>Exceptional situations</h3>
+
+If there is no entry for <i>function-name</i> in <code>*subroutine-description-table*</code>, then an error is signalled.
+
+
+<h3>Example</h3>
+
+Removed for now due to changes.
+
+<h3>Discussion of design decisions</h3>
+
+<ol>
+<li>Note that any items on a stack frame that are compound objects are passed by reference.  However, before passing the joint state to a completion or any observers, it is copied.  Suppose, for example, that function <code>foo</code> is called with parameter <code>a</code> being the array [1 2 3].  Learning algorithm L1 is informed of this choice and notes the current joint state.  Meanwhile, within <code>foo</code>,  the first element of <code>a</code> is set to 0.  Later, a choice point is reached, and the current joint state must be passed to completion C1.  What values of a are present in C1's copy of the current joint state and L1's copy of the previous state?  The answer is that C1's copy shows <code>a = [0 2 3]</code> and L1's copy shows <code>a = [1 2 3]</code>.  Thus, the stack frame's information is kept as current as possible, but completions and observers can nevertheless assume that a joint state that is passed to them will not change 'under their noses'.
+<li>The motivation for having <code>choose-arg</code> be allowed rather than just using <code>with-choice</code> is that, this way, more information can automatically be put in the choice stack frame.
+</ol>
+
+<a name="choose">
+<h2><i>Macro</i> choose</h2>
+</a>
+
+<h3>Syntax</h3>
+<code>choose <i>label</i> <i>form_0</i> ... <i>form_n</i></code>
+
+<h3>Arguments</h3>
+<i>label</i>, not evaluated, is the <a href="#label">label</a> for this choice point<br>
+<i>form_i</i>, not evaluated, is a form
+
+<h3>Description</h3>
+Expands to code that
+
+<ol>
+<li>Updates the <a href="#program-counter">program counter</a>.
+<li>Sets the <a href="#next-frame">next frame</a> of the current joint state to be a new <a href="#frame">frame</a> with label <i>label</i>.
+<li>Adds a single entry to the new frame with name being the symbol <code>choice-index</code> and value unspecified.
+<li>Uses the <a href="#currently-active-completion">currently active
+completion</a> to choose a value between 0 and n for <code>choice-index</code>.
+<li>Informs all <a href="#observer">observers</a> about the choice that has been made at this joint state.
+<li>Fills in the value of <code>choice-index</code> in the frame.
+<li>Adds the new frame to the <a href="#choice-stack">choice stack</a>.
+<li>Evaluates the chosen form.
+<li>Informs all <a href="#observer">observers</a> that the <a href="#choice-block">choice block</a> is about to be exited.
+<li>Removes the top element from the choice stack.
+<li>Returns the return value of the form that was evaluated.
+</ol>
+
+<h3>Example</h3>
+
+Removed for now due to changes.
+
+<h3>Discussion of design decisions</h3>
+
+<ol>
+<li>See first point in discussion for <code>call</code>.
+</ol>
+
+
+
+
+
+<a name="with-choice">
+<h2><i>Macro</i> with-choice</h2>
+</a>
+<h3>Syntax</h3>
+<code>with-choice (<i>label</i> (<i>choice-var choice-list</i>)) &rest <i>body</i></code>
+
+<h3>Arguments</h3>
+<i>label</i>, not evaluated, is the <a
+href="#label">label</a> of this choice point<br>
+<i>choice-var</i>, not evaluated, is a symbol <br>
+<i>choice-list</i>, evaluates to a list<br>
+<i>body</i>, not evaluated, is a list of forms surrounded by an implicit <code>progn</code>
+
+<h3>Description</h3>
+Expands to code that
+
+
+<ol>
+<li>Updates the <a href="#program-counter">program counter</a>.
+<li>Sets the <a href="#next-frame">next frame</a> of the current joint state to be a new <a href="#frame">frame</a> with label <i>label</i>.
+<li>Adds a single entry to the new frame with name being the symbol <code>choice-var</code> and value unspecified.
+<li>Uses the <a href="#currently-active-completion">currently active
+completion</a> to choose a value from <code>choice-list</code> for  <code>choice-var</code>.
+<li>Informs all <a href="#observer">observers</a> about the choice that has been made at this joint state.
+<li>Fills in the value of <code>choice-var</code> in the frame.
+<li>Adds the new frame to the <a href="#choice-stack">choice stack</a>.
+<li>Evaluates the body with <code>choice-var</code> bound to the chosen value.
+<li>Informs all <a href="#observer">observers</a> that the <a href="#choice-block">choice block</a> is about to be exited.
+<li>Removes the top element from the choice stack.
+<li>Returns the return value of the last form evaluated in <i>body</i>.
+</ol>
+
+<h3>Example</h3>
+
+
+Removed due to changes.
+
+<h3>Discussion of design decisions</h3>
+
+Comparing the above example to the one for <code>call</code>, less
+information is automatically added to the stack this way, but the body
+of the choice can be an arbitrary form rather than a single function
+call.
+
+<a name="get-state">
+<h2><i>Function</i> get-state</h2>
+</a>
+
+<h3>Syntax</h3>
+<code>get-state &optional (<i>fresh</i> nil)</code>
+
+<h3>Arguments</h3>
+<i>fresh</i> is a Boolean.  
+
+<h3>Description</h3>
+Returns the current state of the environment, or a copy if <i>fresh</i> is true.
+
+<h3>Discussion of design choices</h3>
+
+<ol>
+<li>It seems safer to have a function that returns the state rather than just expose the state directly to the user.
+<li>Note that the return value is the env state itself unless <i>fresh</i> is true.  Thus, it is an error for partial programs to modify this object in any way unless <i>fresh</i> is true.  Also, if for some reason the partial program wants to store previous states in its memory, it should again set <i>fresh</i> true.
+</ol>
+
+<a name="action">
+<h2><i>Macro</i> action</h2>
+</a>
+
+<h3>Syntax</h3>
+<code>action <i>action</i> &optional <i>label</i>
+<p>
+<h3>Arguments</h3>
+<i>action</i>, evaluated, is an object denoting an action in the environment.
+<i>label</i>, not evaluated, is the label for this action point.  If it is not provided, and <i>action</i> (unevaluated) is a symbol, then it defaults to this symbol.
+<p>
+<h3>Description</h3>
+
+Expands to code that
+<ol>
+<li>Updates the <a href="#program-counter">program counter</a>.
+<li>Informs all <a href="#observer">observers</a> that an action is about to be done.
+<li>Performs <i>action</i> in the environment.
+<li>Informs all observers of the reward and new environment state.
+<li>Returns nothing.
+</ol>
+
+<h3>Exceptional situations</h3>
+
+<ol>
+<li>If <i>action</i> is not a legal action in the current environment state, then an error is signalled.
+<li>If the environment is at a terminal state, then an error is signalled.
+</ol>
+
+
+
+
+
+<h3>Discussion of design decisions</h3>
+
+The main decision here is whether to treat actions differently than, e.g. a statement of the form <code>(setf x 3)</code>.  Currently they are treated differently, in that observers are informed, and a new choice block is started.  This means that learning algorithms will have the opportunity to learn a Q-function at action states, even though there is no choice to be made.  I think this might help reward to flow more smoothly via Bellman backups, especially in function approximation settings.  It might be worth allowing the user to make this decision though.
+
+<a name="mem">
+<h2><i>Macro</i> mem </h2>
+</a>
+
+<h3>Syntax</h3>
+<code>mem <i>item</i> &optional <i>item-key</i>
+
+<h3>Arguments</h3>
+<i>item</i>, evaluated, is any object.
+<i>item-key</i>, not evaluated, is a symbol.  If <i>item</i> (not evaluated) is a symbol, then <i>item-key</i> may be omitted, and defaults to this symbol.
+
+<h3>Description</h3>
+
+Sets the <a href="#value">value</a> corresponding to <i>item-key</i> in the top frame on the <a href="#choice-stack">choice stack</a> to be <i>item</i>.  Has the same result regardless of whether a <a href="#frame-entry">frame entry</a> with this key is already present in the frame.
+
+<h3>Discussion of design decisions</h3>
+
+<ol>
+<li>Allows the user to add information to the choice stack that is not automatically added by <code>call, choice</code> or <code>with-choice</code>.  Ideally, it would not be necessary for the user to do this, but we have not figured out a good way for the system to automatically add all bindings to the stack.
+<li>Note that the discussion after <code>call</code> about adding compound objects by reference still applies.
+</ol>
+
+
+<a name="gmem">
+<h2><i>Macro</i> gmem</h2>
+</a>
+
+
+<h3>Syntax</h3>
+<code>gmem <i>item</i> &optional <i>item-key</i>
+
+<h3>Arguments</h3>
+<i>item</i>, evaluated, is any object.
+<i>item-key</i>, not evaluated, is a symbol.  If <i>item</i> (not evaluated) is a symbol, then <i>item-key</i> may be omitted, and defaults to this symbol.
+
+<h3>Description</h3>
+
+Sets the <a href="#value">value</a> of the <a href="#frame-entry">frame entry</a> corresponding to <i>item-key</i> in the <a href="#global-frame">global frame</a> to be <i>item</i>.  Has the same result regardless of whether an entry with this key is already present in the frame.
+
+<h3>Discussion of design decisions</h3>
+
+<ol>
+<li>This is to allow users to specify information relevant to a policy that is not specific to any particular level of the stack, e.g. a map of the environment, or, in the case of POMDPS, the current belief state in the case of POMDPs.
+<li>Note that the discussion after <code>call</code> about adding compound objects by reference still applies.
+</ol>
+
+
+<a name="state"><h1>Contents of the joint state</h1></a>
+<p>
+The state of a running ALisp program is called the joint state.  The ALisp system is responsible for making sure that the joint state is up-to-date before sending any messages to the completion or observers.
+
+The joint state consists of the <a href="#env-state">environment state</a>, <a href="#program-counter">program counter</a>, <a href="#global-frame">global frame</a>, <a href="#choice-stack">choice stack</a>, and <a href="#next-frame">next frame</a>.
+
+
+<a name="running"><h1>Running an ALisp program</h1></a>
+
+Every time an ALisp program begins, an <code>inform-start-episode</code> message is sent to all observers.  The program starts execution at the top-level subroutine.  Statements in standard Lisp are executed using Lisp semantics, and Alisp-specific operations are executed according to the descriptions above.  Upon termination of the program, an <code>inform-part-prog-terminated</code> message is sent to all observers.  It is an error for the partial program to terminate when the environment has not terminated.
+
+
+<a name="glossary"><h1>Glossary</h1></a>
+
+
+
+<dl>
+
+<a name="subroutine-description-table">
+<dt><b><code>*subroutine-description-table*</code></b>
+<dd>A global hashtable that maps symbols naming <a href="#alisp-subroutine">ALisp subroutines</a> to <a href="#subroutine-description">subroutine descriptions</a>
+
+
+<a name="alisp-subroutine">
+<dt><b>ALisp subroutine</b>
+<dd>A function that was defined using <a href="#defsubroutine"><code>defsubroutine</code></a>, and therefore has an entry in *subroutine-description-table*.
+</a>
+
+<a name="choice-block">
+<dt><b>Choice block</b>
+<dd>Every choice point has a corresponding choice block, which is the extent during which that choice is active (has an entry on the choice stack).  Learning algorithms are informed when entering or leaving a choice block.
+</a>
+
+<a name="choice-list">
+<dt><b>Choice list</b>
+<dd>Every <a href="#unspecified">unspecified</a> parameter in a <a href="#lambda-list-with-choices">lambda list with choices</a> has a corresponding choice list (evaluated at runtime), from which an element will be chosen by the completion.
+
+<a name="choice-stack">
+<dt><b>Choice stack</b>
+<dd>A stack of frames.  Whenever a <a href="#choice-block">choice block</a> is entered, a new frame is pushed onto this stack, and when the block is exited, the corresponding frame is popped off.
+</a>
+
+<a name="choice-stack-frame">
+<dt><b>Choice stack frame</b></a>
+<dd>A <a href="#frame">frame</a> on the choice stack.
+</a>
+
+<a name="completion">
+<dt><b>Completion</b></a>
+<dd>Specifies how to make choices in an ALisp program.
+</a>
+
+<a name="containing-subroutine">
+<dt><b>Containing subroutine</b></a>
+<dd>(of a joint state) The name of the most recently entered ALisp subroutine that has
+not yet exited at this state.  
+
+<a name="copy">
+<dt><b>Copy</b></a>
+<dd>The return value of the generic function <code>clone</code> applied to some Lisp object.  Methods for clone are implemented in the code for standard data types - for any user-defined data types that can be part of the joint state, a clone method must be implemented.  The intended meaning is that changes to the original object do not affect the cloned object.
+
+<a name="currently-active-completion">
+<dt><b>Currently active completion</b>
+<dd>When executing an ALisp program, there must always be a <a href="#completion">completion</a> that is currently being used to make choices.
+</a>
+
+<a name="env-state">
+<dt><b>Environment state</b></a>
+<dd>A component of the joint state.  Equals the current state of the environment.
+
+<a name="frame">
+<dt><b>Frame</b></a>
+<dd>A data structure that consists of a set of <a href="#frame-entry">frame entries</a>.  Intended to represent a set of variable-value pairs.
+
+<a name="frame-entry">
+<dt><b>Frame entry</b>
+<dd>Consists of a <a href="#variable-name">variable name</a> together with a <a href="#value">value</a>.
+</a>
+
+<a name="gen-choice-point">
+<dt><b>Generalized choice point</b>
+<dd>A location within an ALisp program that is a <code>call, choice, with-choice</code>, or <code>action</code> statement.
+</a>
+
+<a name="global-frame">
+<dt><b>Global frame</b>
+<dd>A <a href="#frame">frame</a> that contains variable-value pairs that are not specific to any level of the stack, but are globally relevant.
+</a>
+
+<a name="label">
+<dt><b>Label</b>
+<dd>1) (of a program location) A symbol that is a label for a program
+location.  Every generalized choice point has a label.  Must be unique
+within containing subroutine.
+2) (of a choice stack frame) A symbol that names the frame.
+</a>
+
+<a name="lambda-list-with-choices">
+<dt><b>Lambda list with choices</b></a>
+<dd>A standard lambda list where some of the elements are of the form <code>(choose-arg <i>choice-list</i>)</code> (where <i>choice-list</i> evaluates to a list).  Those elements are said to be <a href="#unspecified">unspecified</a> by the lambda list.  All other elements are said to be <a href="#specified">specified</a> by the lambda list.
+
+<a name="next-frame">
+<dt><b>Next frame</b></a>
+<dd>A component of the joint state.  Its value, if non-nil, is a frame, in which some variables may have value being the symbol <code>unspecified</code>.  If it is non-nil, it means that a new choice block is about to be entered once values for the unspecified variables are chosen.
+
+<a name="observer">
+<dt><b>Observer</b></a>
+<dd>Any running ALisp program has a set of observers who are informed of various events that occur during execution.  Observers can include learning algorithms, statistics gatherers, etc.
+
+<a name="program-counter">
+<dt><b>Program counter</b></a>
+<dd>A component of the joint state.  Its value is a <a href="#program location identifier">program location ID</a>.  The program counter is guaranteed to be up-to-date at any joint state that is passed to a completion or observer.
+
+
+<a name="prog-loc-identifier">
+<dt><b>Program location identifier</b></a>
+<dd>A unique identifier for <a href="#gen-choice-point">generalized choice points</a> in an ALisp program.  Is a cons of the name of the subroutine that contains the location with the <a href="#label">label</a> of the location.
+
+<a name="specified">
+<dt><b>Specified</b></a>
+<dd>A parameter of a lambda list with choices that is not <a href="#unspecified">unspecified</a>.
+
+<a name="subroutine-description">
+<dt><b>Subroutine description</b></a>
+<dd>A data structure that contains, for now, just the lambda list of an <a href="#alisp-subroutine">ALisp subroutine</a>
+<a>
+
+<a name="unspecified">
+<dt><b>Unspecified</b></a>
+<dd>A parameter of a lambda list with choices that is of the form <code>(choose-arg <i>choice-list</i>)</code>.
+
+<a name="value">
+<dt><b>Value</b>
+<dd>(In the context of frames) A field in the frame entry.  Can be any object.  May be compared to other objects using equalp.
+</a>
+
+<a name="variable-name">
+<dt><b>Variable name</b>
+<dd>(In the context of frames) A field in a frame entry of type symbol.
+</a>
+
+
+
+
+
+
+
+</body>
+</html>

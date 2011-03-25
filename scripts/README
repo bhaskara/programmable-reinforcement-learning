@@ -1,0 +1,10 @@
+A bunch of handy scripts for using the hrl code.  They assume that
+1) hrl/scripts is in your path
+2) you're using bash
+
+changed - what has changed compared to cvs repository?
+hcvst - different version of same thing
+lgrep - grep for a regexp in all lisp files
+lispfiles - list all .lisp files in lispdirs
+lispdirs - list all directories that aren't CVS or external
+make-alisp-release - copy over the files that are needed for alisp release

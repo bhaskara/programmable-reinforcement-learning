@@ -1,0 +1,50 @@
+<html>
+<head>
+<title>The rl-user package</title>
+</head>
+<body>
+<h1>The rl-user package</h1>
+
+The <code>rl-user</code> package contains code for doing "flat"
+reinforcement learning.
+
+
+<h2>Executing in an environment</h2>
+
+These are functions that actually cause episodes to transpire in the
+environment, controlled in some manner, and possibly being observed by
+learning algorithms.  For more details, see <a href="rl-control.html">here</a>.
+<ul>
+<li><code>learn ENV POLICY OBSERVERS NUM-STEPS &key (HIST-LENGTH nil)
+(STEP-PRINT-INC 100) (EP-PRINT-INC 10)</code> : cause NUM-STEPS steps
+of learning to happen in ENV.  POLICY is used for exploration.
+OBSERVERS is a designator for a list of learning algorithms.
+HIST-LENGTH is the number of times a snapshot of the state of all the
+learning algorithms will be taken (e.g. for generating learning
+curves).  
+<li><code>on-policy-learning ENV LEARNING-ALG NUM-STEPS &key
+(HIST-LENGTH nil) (STEP-PRINT-INC 100) (EP-PRINT-INC 10)</code> : A special case
+of learn above, for learning algorithms that are on-policy.  
+<li><code>evaluate ENV POLICIES &key (NUM-TRIALS 1) (NUM-STEPS nil)
+(ENV-DISPLAY-STREAM nil) (STEP-PRINT-INC 100)</code> : Front end for
+evaluating policies.  Returns a sequence containing the total reward
+for each policy, averaged over NUM-TRIALS episodes.
+<li><code>io-interface ENV &rest ADVISORS</code> : allow the user to
+interact with the environment using terminal I/O.  Each ADVISOR is
+some object that will print its opinion on the states that are
+encountered.  For example, a Q-function will print out the Q-values of
+each action.
+</ul>
+
+<h2>Operations on learning algorithms</h2>
+
+These are operations on objects representing reinforcement learning
+algorithms.
+<ul>
+<li><code>get-policy-hist ALG</code> : Get the history of policies
+learnt by this algorithm.
+<li><code>get-q-hist ALG</code> : Get the history of Q_functions
+learnt by this algorithm.
+<li><code>reset ALG</code> : reset the state of the algorithm,
+including any learning rate parameters and the policy history.
+</ul>

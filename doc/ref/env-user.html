@@ -1,0 +1,38 @@
+<html>
+<head>
+<title>The env-user package</title>
+</head>
+<body>
+<h1>The env-user package</h1>
+
+The <code>env-user</code> package contains code for interacting with
+environments.  This is useful for
+<ul>
+<li>Using terminal I/O to control an agent in an environment to get a
+feeling for how the environment works.
+<li>Writing learning algorithms that interact with the environment.
+</ul>
+<p>
+The operations in this package are:
+<ul>
+<li><code>do-action ENV ACTION</code> : do an action in an
+environment, and return three values: 1) The reward 2) The next
+percept (usually the state) 3) A boolean which is true if the
+environment has terminated.
+<li><code>get-state ENV</code> : return the state of the environment.
+<li><code>reset ENV</code> : reset the environment state using the
+initial-state distribution.
+<li><code>reset-to-state ENV STATE</code> : reset the environment
+state to a particular state.  Not all environments implement this.
+<li><code>at-terminal-state ENV</code> : Is the environment at a
+terminal state?
+<li><code>get-actions ENV</code> : Return the set (usually represented
+as a list) of actions available at the current state of the
+environment.
+<li><code>io-interface ENV</code> : Allows the user to interact with
+the environment using the terminal.  The user enters actions and these
+are performed in the environment and the next state displayed.  When
+using this function, make sure to use the package of the environment
+(using <code>use-package</code>) to make sure that any symbol names
+you type as actions get turned into symbols in the right way.
+</ul>

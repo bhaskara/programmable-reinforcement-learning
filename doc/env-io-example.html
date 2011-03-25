@@ -1,0 +1,138 @@
+<html><head><title>Example of env:io-interface</title></head>
+<body>
+<code>
+</code><pre>CL-USER(11): (setf e (make-example-env1))
+#&lt;TD-TAXI-ENV:&lt;TD-TAXI-ENV&gt; @ #x20a5b05a&gt;
+CL-USER(12): (rl-user:io-interface e)
+
+Environment reset to 
+XXXXX
+X X X
+Xt  X
+XXXXX
+Source : (1 0)  Dest : (1 1)  Fuel : 1
+
+At state 
+XXXXX
+X X X
+Xt  X
+XXXXX
+Source : (1 0)  Dest : (1 1)  Fuel : 1.
+Set of available choices is (N E S W D P F)
+--------------------------------------------------
+Please enter choice, or nil to terminate. E
+Episode 0 Step 0.  Did E, received -0.1, and now in state 
+XXXXX
+X X X
+X t X
+XXXXX
+Source : (1 0)  Dest : (1 1)  Fuel : 1
+
+At state 
+XXXXX
+X X X
+X t X
+XXXXX
+Source : (1 0)  Dest : (1 1)  Fuel : 1.
+Set of available choices is (N E S W D P F)
+--------------------------------------------------
+Please enter choice, or nil to terminate. E
+Episode 0 Step 1.  Did E, received -0.1, and now in state 
+XXXXX
+X X X
+X  tX
+XXXXX
+Source : (1 0)  Dest : (1 1)  Fuel : 1
+
+At state 
+XXXXX
+X X X
+X  tX
+XXXXX
+Source : (1 0)  Dest : (1 1)  Fuel : 1.
+Set of available choices is (N E S W D P F)
+--------------------------------------------------
+Please enter choice, or nil to terminate. N
+Episode 0 Step 2.  Did N, received -0.1, and now in state 
+XXXXX
+X XtX
+X   X
+XXXXX
+Source : (1 0)  Dest : (1 1)  Fuel : 1
+
+At state 
+XXXXX
+X XtX
+X   X
+XXXXX
+Source : (1 0)  Dest : (1 1)  Fuel : 1.
+Set of available choices is (N E S W D P F)
+--------------------------------------------------
+Please enter choice, or nil to terminate. S
+Episode 0 Step 3.  Did S, received -0.1, and now in state 
+XXXXX
+X X X
+X  tX
+XXXXX
+Source : (1 0)  Dest : (1 1)  Fuel : 1
+
+At state 
+XXXXX
+X X X
+X  tX
+XXXXX
+Source : (1 0)  Dest : (1 1)  Fuel : 1.
+Set of available choices is (N E S W D P F)
+--------------------------------------------------
+Please enter choice, or nil to terminate. W
+Episode 0 Step 4.  Did W, received -0.1, and now in state 
+XXXXX
+X X X
+X t X
+XXXXX
+Source : (1 0)  Dest : (1 1)  Fuel : 1
+
+At state 
+XXXXX
+X X X
+X t X
+XXXXX
+Source : (1 0)  Dest : (1 1)  Fuel : 1.
+Set of available choices is (N E S W D P F)
+--------------------------------------------------
+Please enter choice, or nil to terminate. P
+Episode 0 Step 5.  Did P, received -0.1, and now in state 
+XXXXX
+X X X
+X t X
+XXXXX
+Source : (1 0)  Dest : (1 1)  Fuel : 1
+
+At state 
+XXXXX
+X X X
+X t X
+XXXXX
+Source : (1 0)  Dest : (1 1)  Fuel : 1.
+Set of available choices is (N E S W D P F)
+--------------------------------------------------
+Please enter choice, or nil to terminate. D
+Episode 0 Step 6.  Did D, received -0.1, and now in state 
+XXXXX
+X X X
+X t X
+XXXXX
+Source : (1 0)  Dest : (1 1)  Fuel : 1
+
+At state 
+XXXXX
+X X X
+X t X
+XXXXX
+Source : (1 0)  Dest : (1 1)  Fuel : 1.
+Set of available choices is (N E S W D P F)
+--------------------------------------------------
+Please enter choice, or nil to terminate. nil
+
+</pre>
+</body></html>

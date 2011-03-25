@@ -1,0 +1,110 @@
+<html>
+<head>
+<title>
+State abstraction for Taxi domain
+</title>
+</head>
+<body>
+
+
+<code>
+<pre>
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; makes state abstraction features for taxi domain
+;; from alisp-examples/taxi/td-taxi-prog-features.lisp
+;; make-state-choice-feat-list is a macro that expands
+;; to a function that looks at the joint state label
+;; and computes a bunch of features depending on its value
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun make-tabular-featurizer ()
+  "make-tabular-featurizer.  Return a list of three functions, which take in a state and action, and return the Qr feature list, the Qc feature list, and Qe-feature-list respectively, which are suitable to pass to a tabular function approximator.  The features vectors are annotated with the names of the individual features, which makes it more readable but takes up a bit more space.
+
+The specific features are as follows
+
+nav-choice
+----------
+Qr : taxi-pos, choice
+Qc : taxi-pos, choice
+Qe : have-pass?, in-dropoff?, source-dest-dist
+
+nav-pass
+--------
+Qr : taxi-pos, pass-source
+Qc : constant
+Qe : constant
+
+nav-dest
+--------
+Qr : taxi-pos, pass-dest
+Qc : have-pass?
+Qe : have-pass?, source-dest-dist
+
+top
+---
+Qr : taxi-pos, have-pass?, pass-source, pass-dest, choice
+Qc : have-pass?, pass-source pass-dest choice
+Qe : constant"
+  
+  (list
+   ;; QR
+   (make-state-choice-feat-list (:include-cp-labels t :include-feat-names t)
+				(top taxi-pos-feat have-pass? pass-source-feat pass-dest-feat choice)
+				(nav-pass taxi-pos-feat pass-source-feat)
+				(nav-dest taxi-pos-feat pass-dest-feat)
+				(nav-choice taxi-pos-feat choice))
+   
+   ;; QC
+   (make-state-choice-feat-list (:include-cp-labels t :include-feat-names t)
+				(top have-pass? pass-source-feat pass-dest-feat choice)
+				(nav-pass)
+				(nav-dest have-pass?)
+				(nav-choice taxi-pos-feat choice taxi-dest))
+   
+   ;; QE
+   (make-state-choice-feat-list (:include-cp-labels t :include-feat-names t)
+				(top)
+				(nav-pass)
+				(nav-dest have-pass? pass-source-feat pass-dest-feat)
+				(nav-choice have-pass? picking-up-feat pass-source-feat pass-dest-feat))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Definitions of the individual features
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun taxi-dest (omega u)
+  (declare (ignore u))
+  (dest (js-mem omega)))
+
+(defun picking-up-feat (omega u)
+  (declare (ignore u))
+  (picking-up (js-mem omega)))
+  
+
+(defun taxi-pos-feat (omega u)
+  (declare (ignore u))
+  (taxi-pos (js-env-state omega)))
+
+(defun have-pass? (omega u)
+  (declare (ignore u))
+  (eql (pass-loc (js-env-state omega)) *in-taxi*))
+
+(defun pass-source-feat (omega u)
+  (declare (ignore u))
+  (pass-source (js-env-state omega)))
+
+(defun pass-dest-feat (omega u)
+  (declare (ignore u))
+  (pass-dest (js-env-state omega)))
+
+
+
+</pre>
+</code>
+</body>
+</html>
+  
+  
+  
+  

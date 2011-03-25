@@ -1,0 +1,75 @@
+<html>
+<head>
+<title>The create-env package</title>
+</head>
+<body>
+<h1>The create-env package</h1>
+
+The <code>create-env</code> contains symbols used when defining new
+environments.  The top-level class for environments is
+<code>&lt;env&gt;</code>.  General environments can be partially
+observable.  To create a fully observable environment, subclass
+<code>&lt;fully-observable-env&gt;</code>.  
+
+When creating an environment, you first need to decide on a
+representation for states and actions.  States and actions can be any
+Lisp object, e.g., numbers, lists, hashtables, or structures.  We
+recommend, however, that you define a structure type for your
+particular environment's states and actions. See, for example, <a
+href="../../lisp/envs/taxi/td-taxi-env.lisp">envs/taxi/td-taxi-env.lisp</a>,
+which defines a type <code>td-taxi-state</code>.  Defining an new type
+rather than just using, say, a list, is good because you can define
+methods that specialize on this type.  For example, the standard Lisp
+generic function <code>print-object</code> when applied to a
+<code>td-taxi-state</code> prints a nice readable representation
+showing the map, as can be seen when using the
+<code>io-interface</code> (see the example in the tutorial).  If you
+define a type for states or actions, you should define methods for
+<code>clone</code> (which creates a fresh copy of a state) and
+<code>same</code> (which tests equality). If you plan to ever use
+states or actions as keys in a hashtable (for example, when using a tabular
+Q-function representation), you should also define
+<code>canonicalize</code>. Fortunately, these methods are usually
+quite straightforward to write - you should be able to proceed by
+analogy with the methods for <code>&lt;td-taxi-env&gt;</code>.
+<p>
+The specific operations that must be implemented for fully observable
+environments are:
+<ul>
+<li>One of <code>sample-next</code> or <code>do-action</code>.
+<li>One of <code>sample-init</code> or <code>reset</code>.
+<li><code>is-terminal-state</code>.
+<li><code>avail-actions</code>.
+<li><code>sample-percept</code>, if the environment is not fully
+observable.
+<li><code>sample-init-percept</code>, if the environment is not fully
+observable.
+</ul>
+<p>
+Here are descriptions of these operations.
+<ul>
+<li><code>sample-next STATE ACTION</code>.  Sample and return two
+values: 1) The resulting state after doing <code>ACTION</code> in <code>STATE</code> 2) The
+reward obtained from this move.
+<li><code>do-action ENV ACTION</code> : do an action in an
+environment, and return three values: 1) The reward 2) The next
+percept (usually the state) 3) A boolean which is true if the
+environment has terminated.
+<li><code>sample-init ENV</code>.  Sample the initial state of the environment.
+<li><code>reset ENV</code> : reset the environment state using the
+initial-state distribution.
+<li><code>is-terminal-state ENV STATE</code> : return t if <code>STATE</code> is a
+terminal state and nil otherwise.
+<li><code>avail-actions ENV STATE</code> : Return the <a href="set.html">set</a> of available actions at <code>STATE</code>.
+<li><code>sample-percept ENV STATE ACTION REWARD NEXT-STATE</code> :
+sample the percept observed after doing <code>ACTION</code> in <code>STATE</code> and moving to
+<code>NEXT-STATE</code> with reward <code>REWARD</code>.  Not required for subclasses of
+<code>&lt;fully-observable-env&gt;</code>.
+<li><code>sample-init-percept ENV STATE</code>.  Sample the initial
+percept given that the initial state is <code>STATE</code>.  Not required for
+subclasses of <code>&lt;fully-observable-env&gt;</code>.
+</ul>
+
+
+</body>
+</html>

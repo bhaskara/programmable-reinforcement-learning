@@ -1,0 +1,40 @@
+<html>
+
+<head>
+<title>
+ALisp Tutorial - Miscellaneous topics
+</title>
+</head>
+
+<body>
+
+<h2>Miscellaneous topics</h2>
+
+<h3>Implementing MAXQ using ALisp</h3>
+
+TODO : this hasn't been implemented yet.
+<p>
+MAXQ (Dietterich:00) is a framework for hierarchical learning, based on the idea of recursively decomposing a problem into tasks and subtasks.  Some of the main differences between ALisp and MAXQ as described in Dietterich's paper are :
+<ul>
+<li>The syntax of MAXQ consists of a set of tasks and subtasks, rather than a partial program.</li>
+<li>The learning algorithm is slightly different - it requires the programmer to provided 'pseudorewards' at the termination states of each subtask.  The pseudorewards allow us to consider each task without thinking about the parents, but possibly at the cost of hierarchical optimality.</li>
+<li>MAXQ allows the possibility of 'nonhierarchical execution' - i.e., during learning, we run each task to completion, but during execution, we go back to the top of the hierarchy after each step.  This can allow us to overcome the constraints on performance resulting from a specific hierarchy.</li>
+</ul>
+
+<p>
+To implement MAXQ, one strategy would be to proceed by analogy with the ALisp code, and set up a MAXQ learning main loop, corresponding learning messages, and so on.  However, ALisp, being built on a full programming language, is very expressive, and an alternate strategy is to implement MAXQ on top of it.  
+<p>
+The following code can all be found in the <code>maxq/</code> directory.  First, we define a class <code>&lt;maxq-hierarchy&gt;</code> which inherits from <code>&lt;alisp-program&gt;</code>.  There is also a definition macro <code>def-maxq-hierarchy</code>.  This defines a subclass of <code>&lt;maxq-hierarchy&gt;</code>, whose <code>start</code> method is an 'ALisp translation' of what the hierarchy means.  Note that any learning algorithm for ALisp programs will now work for MAXQ.  In case some algorithms want to make specific use of the MAXQ structure, we also store the MAXQ tree along with the object.
+<p>
+Next, we define the MAXQ-Q learning algorithm...
+<p>
+We implement nonhierarchical execution by just viewing it as a different way to translate the MAXQ hierarchy into ALisp.  This is also done by the <code>def-maxq-hierarchy</code> macro.  To turn nonhierarchical execution on and off, use the <code>set-nonhierarchical-execution</code> function.
+<p>
+
+
+
+
+</body>
+
+</html>
+

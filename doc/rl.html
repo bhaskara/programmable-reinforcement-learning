@@ -1,0 +1,198 @@
+<html><head><title>ALisp Tutorial - Reinforcement Learning</title></head>
+
+<body>
+
+<h2>Reinforcement Learning</h2>
+
+We now describe how to do flat reinforcement learning.  Strictly
+speaking, this part of the code is subsumed by hierarchical learning
+using ALisp, since flat reinforcement can be expressed as a trivial
+ALisp partial program with a loop that repeatedly chooses the next action to
+do.  Nevertheless, we suggest
+trying to understand this part of the code before moving to the next
+section, since the architecture of the ALisp main loop is based on
+that of the main loop for flat learning, but with an additional layer of complexity.
+
+<h3>Creating an example learning algorithm instance</h3>
+<p>
+The <code>rl-user</code> package contains code for doing "flat"
+reinforcement learning.  A learning algorithm is represented as an
+object.  Assuming <code>e</code> holds the example taxi environment
+from the previous section, evaluating
+
+</p><blockquote>
+<pre><code>(setf q-learner (rl-user:make-q-learning-alg e))
+</code></pre>
+</blockquote>
+
+will create an object <code>q-learner</code>
+representing a Q-learning algorithm. There are various tunable
+parameters to a Q-learning algorithm, such as the learning rate and the
+type of Q-function representation, but for now we use the defaults - a
+constant learning rate and a tabular representation of Q. <h3>Using the algorithm to learn</h3>
+<p>
+To actually do learning using <code>q-learner</code>, we use the function <code>learn</code>.  For example
+
+</p><blockquote>
+<pre><code>CL-USER(132): (rl-user:learn e 'rl-user:random q-learner 100000 :hist-length 100)
+Episode 0..........
+Episode 10.........
+Episode 20..........
+Episode 30..............
+Episode 40...........
+(omitted printed representation of in-between learning episodes)
+Episode 740............
+Episode 750..............
+Episode 760...............
+Episode 770.....
+</code></pre>
+</blockquote>
+
+This does learning for 100000 steps in <code>e</code>, using random exploration.  Since we want a history length of 100 values, the current Q-function and policy are stored every 1000 steps. 
+
+<h3>Examining the results of learning</h3>
+<p>
+We've used <code>q-learner</code> to do learning, but how do we see how well it did?  One way is to generate a <em>learning curve</em>.  Recall that when calling <code>learn</code>,
+we specified a history length of 100. This causes the current
+Q-estimate and corresponding greedy policy to be stored every 1000
+steps. We can now ask how much total reward each of these policies
+receives on average, using the <code>evaluate</code> function as
+follows (some of these functions might dump large printed
+representations to the output, which I've left out here. To avoid this,
+use the Common Lisp variables <code>*print-level*</code> and <code>*print-length*</code>):
+</p><blockquote>
+<pre><code>CL-USER(136): (setf q-learning-policy-hist (rl-user:get-policy-hist q-learner))
+[Omitted printed representation of the policies]
+CL-USER(144): (setf q-learning-curve (rl-user:evaluate e q-learning-policy-hist :num-steps 25 :num-trials 5))
+Evaluating policies....................................................................................................
+#(-5.58 -2.7 -2.5 -2.5 -2.5 -2.5 -2.5 -2.5 -2.5 -2.5 ...)
+CL-USER(145): (pprint q-learning-curve)
+
+#(-5.58 -2.7 -2.5 -2.5 -2.5 -2.5 -2.5 -2.5 -2.5 -2.5 -2.5 -2.5 -1.88
+  -1.28 -2.5 -2.5 -1.28 -2.5 -1.9 -2.5 -2.5 -0.76 -1.26 -1.9 -1.36
+  -0.68 -1.92 -0.68 -1.32 -1.28 -1.28 -1.88 -1.38 -1.9 -0.74 0.3 0.42
+  0.28 0.38 0.42 0.46 0.44 0.38 0.38 0.38 0.44 0.34 0.26 0.42 0.38 0.44
+  0.32 0.44 0.36 0.38 0.34 0.32 0.34 0.3 0.34 0.46 0.48 0.36 0.48 0.36
+  0.42 0.32 0.42 0.42 0.38 0.42 0.26 0.38 0.26 0.38 0.4 0.32 0.44 0.38
+  0.34 0.36 0.38 0.36 0.28 0.42 0.3 0.36 0.32 0.32 0.32 0.42 0.32 0.44
+  0.38 0.38 0.44 0.34 0.32 0.38 0.36)
+</code></pre><code>
+</code></blockquote>
+
+<p>
+We can see that in this example, the algorithm quickly improved at
+first, then seems to have stabilized around 2000 steps in, where it stays for a while before starting
+to improve again, this time reaching what appears to be an optimal policy.
+
+But what does the learnt policy actually do? To get a better idea, we will use
+the function <code>rl:io-interface</code> with a set of `advisors', which will give their opinion about 
+each state. The
+policies in the policy history could be used as advisors, but for
+variety let's use the Q-functions instead. Here is an <a href="rl-io-example.html">example interaction</a>.
+In this example, we used the learnt Q-functions after 1000, 5000, and 90000
+steps respectively as advisors.  For more information about
+the various functions you can use to examine learning curves and results, see the
+<a href="ref/rl-user.html">reference</a>.  During the run we see that the first
+one has barely learnt anything - most of its Q-values are marked UNKNOWN and so its
+recommended choices are quite bad. The second one is better, in that it
+has learnt not to collide with walls and has actual numbers for its Q-values. But still, it hasn't learnt an
+optimal policy - in the example interaction, it often chooses the wrong
+action when trying to navigate to the passenger.  By contrast, the third advisor seems to have found the optimal policy.  For this example,
+the Q-learning algorithm usually finds an optimal policy after 40000 or so steps.
+</p><p>
+Other learning algorithms might do better.  The class <code>&lt;gold-standard&gt;</code>
+implements a model-based method that estimates the parameters of the
+underlying MDP based on samples, then uses dynamic programming to solve
+for the optimal policy (see <code>test/test-rl.lisp</code> for an example). </p><p>
+<b>Exercise</b> : Create an instance of a gold-standard learning
+algorithm, using the function <code>gold-standard:make-gold-standard-learning-algorithm</code>, and compare its performance to Q-learning on this and other environments.  </a>.
+
+</p><h3>Creating new learning algorithms</h3>
+The way the RL code works is summarized in the diagram.
+<img src="rl-diagram.jpg"><br>
+There is a main control loop that interacts
+with the environment according to some policy (possibly nonstationary),
+and there are several 'observers', which can include learning
+algorithms, statistics gatherers, etc. Whenever an 'interesting' event,
+such as an environment step or the start of a new episode, occurs, all
+the observers are notified.  Both the policy and the observers can be
+varied, thus leading to many different modes of execution, as
+described in the <a href="ref/rl-control.html">reference</a>.  The dotted line between the environment and policy refers to the implicit constraint that the policy must suggest actions that are legal in the environment.  Otherwise, an error will be signalled.
+<p>
+Most reinforcement learning algorithms can be implemented by just subclassing <code>&lt;learning-algorithm&gt;</code>
+(the exception is those algorithms that aren't based on gathering
+samples from an environment along trajectories of an exploration
+policy. For these, the behaviour of the main loop has to be modified by
+subclassing the <code>&lt;rl-control&gt;</code> class.)  The <a
+href="ref/learning-algorithm.html">reference</a> describes how to do this.
+
+<p>
+<b>Exercise</b> : Implement a reinforcement learning algorithm of your
+choice (e.g., policy search, advantage-learning, approximate policy
+iteration, etc.) and try it on the taxi domain.
+
+<h3>Function approximation</h3>
+
+<p>
+Function approximation can be used in various places, depending on the
+learning algorithm. As an example, consider using a linear
+approximation to the Q-function in the basic Q-learning algorithm
+above. 
+</p><p>
+The Q-learning algorithm stores its current estimate as an object of
+type <code>&lt;q-function&gt;</code>, which supports operations to
+evaluate it at a state-action, and to update it in response to
+observed samples.  By default, <code>make-q-learning-algorithm</code>
+makes this Q-function use a tabular representation.  Suppose we want to use a linear
+approximation consisting of a constant feature, indicator features for
+picking up and dropping off the passenger, and features measuring the
+distance to the passenger's source and destination, each multiplied in
+turn by indicator features for whether the passenger is currently on
+board, making a total of seven features.
+</p><p>
+The first step is to define a feature function that takes in a state
+and action, and returns these seven features in a vector.  Here is
+some <a href="taxi-lin-features.html">code</a> for creating such a
+feature function.  We can create a feature function for this domain
+using 
+</p><blockquote> 
+<pre><code>(setf featurizer (td-taxi-flat-lfa:make-taxi-featurizer e))
+</code></pre> 
+</blockquote>
+<p>
+To look at the values of this feature function in some specific states, try passing it as an advisor to the io-interface, using 
+</p><blockquote>
+<pre><code>(rl-user:io-interface e featurizer)
+</code></pre>
+</blockquote>
+<p>
+Next, we create a Q-function object that first applies this feature
+function, then takes the inner product of the result with a parameter vector. This can be done using 
+</p><blockquote>
+<pre><code>(setf lfa-q-fn (q-fn:make-approx-q-function e featurizer 'fn-approx:&lt;linear-fn-approx&gt; :dim 7))
+</code></pre>
+</blockquote>
+
+<p>
+The parameter vector is initially all 0s.  To learn the parameters, we can run Q-learning as before.  Note the use of the <code>:q-fn</code> argument to <code>make-q-learning-alg</code>.
+Previously, we had left this field blank, and the Q-function defaulted
+to a tabular representation. Now, we have passed in a Q-function of the
+desired type. </p><blockquote>
+<pre><code>CL-USER(152): (setf lfa-q-learner (rl-user:make-q-learning-alg e :q-fn lfa-q-fn))
+CL-USER(153): (rl-user:learn e 'rl-user:random lfa-q-learner 10000 :hist-length 100)
+</code></pre>
+</blockquote>
+
+<p>
+We can analyze the resulting policies and Q-functions as before, using <code>rl-user:evaluate</code> and <code>rl-user:io-interface</code>.  In this domain, the linear approximation usually does better than the tabular representation.
+<p>
+
+New types of function approximator can created by subclassing the
+<code>&lt;fn-approx&gt;</code> in the <code>fn-approx</code> package.
+See the <a href="ref/fn-approx.html">reference</a> for details.
+<p>
+<b>Exercise</b> : implement another function approximation architecture
+(neural networks, k-nearest-neighbours, linear approximation with batch
+updates, decision trees, etc.) and compare with linear approximation in
+the taxi domain.
+</p></body></html>

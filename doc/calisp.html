@@ -1,0 +1,26 @@
+<html><head><title>ALisp Tutorial - Concurrent ALisp</title></head>
+
+<body>
+
+<h2>Concurrent ALisp</h2>
+
+<p>
+Concurrent ALisp is an extension to standard ALisp that allows the specification of <i>multithreaded</i> partial programs, typically for domains in which there are multiple "effectors" to be controlled.  Because there is not a common Lisp standard for threads, and because we wanted the main ALisp language to be portable, we have chosen to implement concurrent ALisp separately.  Our implementation only works for Allegro Lisp, versions 6.2 or greater.
+<p>
+This section of the tutorial is not complete, so we just give a brief overview of concurrent ALisp.  The architecture of the concurrent ALisp system is analogous to that for standard ALisp - there is a main loop, which is given an environment, partial program, completion, and set of observers.  The difference is that the partial program is in concurrent ALisp, so the semantics for execution is more complicated.  Also, there are additional messages that may now be sent to observers.  Details about these can be found in the help system, and in the paper on "Concurrent Hierarchical Reinforcement Learning" at IJCAI 2005.
+<p>
+To use concurrent ALisp, follow the procedure in the <a
+href="preliminaries.html">introduction</a> to set it up, and try out
+the test script in <code>test/test-calisp.lisp</code>.  Some example
+programs in concurrent ALisp can be found in
+<code>calisp-examples/</code>.  Programs with large numbers of threads
+will need some efficient way of picking the best joint choice.  We
+have implemented <i>coordinated relational linear Q-functions</i> for this purpose, as illustrated in the test script.
+
+
+
+
+
+
+
+</p></body></html>

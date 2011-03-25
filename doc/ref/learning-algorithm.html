@@ -1,0 +1,72 @@
+<html>
+<head>
+<title>Creating new reinforcement learning algorithms</title>
+</head>
+<body>
+<h1>Creating new reinforcement learning algorithms</h1>
+
+To create new flat reinforcement learning algorithms, use the
+<code>rl-observer</code> package.  Most learning algorithms can be
+created by subclassing some subset of these classes (note that Lisp
+has multiple inheritance, so an algorithm can be, e.g., both a
+q-learning algorithm and a policy-learning algorithm).
+<ul>
+<li><code>&lt;rl-observer&gt;</code> : Any object that observes an
+agent executing in an environment.  Includes learning algorithms,
+statistics gatherers, logs, etc.
+<li><code>&lt;learning-algorithm&gt;</code> : An observer that learns
+something, which can be retrieved using the history commands described
+below.
+<li><code>&lt;q-learning-algorithm&gt;</code> : A learning algorithm
+that learns, among other things, a Q-function.
+<li><code>&lt;policy-learning-algorithm&gt;</code> : A learning
+algorithm that learns, among other things, a policy.
+</ul>
+
+<p>
+All learning algorithms are subclasses of <code>&lt;rl-observer&gt;</code>, and the main way to customize their behaviour is to provide methods for the observer operations.  If an
+observer doesn't provide a method for one of the operations, this is
+like saying it ignores the corresponding message from the RL controller.  The observer operations are:
+<ul>
+<li><code>inform-start-execution OBSERVER</code> : inform observer
+that the main reinforcement learning loop is about to commence.
+<li><code>inform-finish-execution OBSERVER</code> : inform observer
+that the main reinforcement learning loop has just terminated.
+<li><code>inform-start-episode OBSERVER STATE</code> : inform observer
+that a new episode is starting at a given state.  May assume that the state argument is <i>fresh</i>, i.e., no other part of the code holds a reference to it.
+<li><code>inform-env-step OBSERVER ACTION REWARD NEXT-STATE
+TERMINATION</code> : inform observer that an action has just been done
+in the environment, leading to a given new state and reward.  May assume that the action and next-state arguments are fresh.
+</ul>
+
+<p>
+For more details on exactly when the above messages are called, see <a href="rl-control.html">here</a>.
+
+
+<p>
+Learning algorithms must implement various methods:
+<ul>
+<li><code>reset ALG</code> : reset the state of the algorithm,
+including any learning rates, and the history.
+<li><code>knowledge-state ALG</code> : return some object which represents
+the algorithm's current estimate of whatever it is trying to learn,
+which will be stored in a history by the central RL control.  For
+example, for a Q-learning algorithm, this method might return the
+current Q-function.  
+<li><code>get-q-fn ALG KNOWLEDGE-STATE</code> : all subclasses of <code>&lt;q-learning-algorithm&gt;</code> must
+implement this method, which extracts a q-function from the knowledge
+state.
+<li><code>get-policy ALG KNOWLEDGE-STATE</code> : all subclasses of
+<code>&lt;policy-learning-algorithm&gt;</code> 
+must implement this method, which extracts a policy from the knowledge
+state.
+</ul>
+
+<p>
+Finally, learning algorithms may call the following methods.
+<ul>
+<li><code>current-env-step ALG</code> : how many steps have elapsed
+since reinforcement learning began.
+<li><code>current-episode-step ALG</code> : how many steps have
+elapsed since this episode began.
+</ul>
