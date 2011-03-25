@@ -1,0 +1,3 @@
+hrl/lisp/test
+
+Tests for the various components of the hrl code, intended as a quick sanity check to make sure things are running ok.  More detailed tests may be in individual subdirectories.
