@@ -1,2 +1,0 @@
-egrep -HIR "$1" `lispfiles`
-# To use this, make sure the scripts directory is in your path and type e.g. lgrep foo to grep for the regular expression "foo" in all lisp files in the directory subtree of the current directory

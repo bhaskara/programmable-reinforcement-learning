@@ -1,2 +1,0 @@
-lgrep "def\w* $1"
-# Useful for looking for definitions of functions, macros, etc.  For example, to search for all definitions of functions whose name begins with foo, type "find-def foo" from the hrl/lisp directory

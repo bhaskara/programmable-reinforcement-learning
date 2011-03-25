@@ -1,2 +1,0 @@
-etags `find \`lispdirs\` -regex ".*\.lisp"`
-# Use in conjunction with emacs etags feature
